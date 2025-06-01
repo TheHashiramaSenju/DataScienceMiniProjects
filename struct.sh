@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the base directory
-BASE_DIR="/home/notshadow/Documents/MiscFiles/Datascience"
+BASE_DIR="/home/user/Documents/MiscFiles/Datascience"
 
 # Ensure the directory exists
 mkdir -p "$BASE_DIR"
