@@ -44,20 +44,38 @@ fig.show()'''
 def visualization():
     print("The visualization process have been started")
     for i in df_clean.columns:
-        plt.title(f'Distribution check of {i}')
-    for i in df_clean.columns:
-        plt.figure(figsize = (6,4))
-    for i in df_clean.columns:    
-        sns.histplot(data=df_clean[i])
-    for i in df_clean.columns:    
+        plt.figure(figsize=(6, 4))  # Create a new figure for each plot
+        
+        # Histogram
+        sns.histplot(df_clean[i])
+        plt.title(f'Histogram of {i}')
+        plt.savefig(f'{i}_histogram.png', dpi=300)  # Save as PNG
+        plt.close()  # Close figure to avoid overlap
+        
+        # KDE plot
+        plt.figure(figsize=(6, 4))
         sns.kdeplot(df_clean[i], fill=True, bw_adjust=0.5)
-    for i in df_clean.columns:    
-        sns.scatterplot(data=df_clean[i])
-    for i in df_clean.columns:    
-        plt.show(block=False)
+        plt.title(f'KDE Plot of {i}')
+        plt.savefig(f'{i}_kde.png', dpi=300)
+        plt.close()
+        
+        # Scatterplot (if applicable, might not be meaningful for 1D data)
+        plt.figure(figsize=(6, 4))
+        sns.scatterplot(y=df_clean[i], x=range(len(df_clean)))  # Scatter visualization
+        plt.title(f'Scatterplot of {i}')
+        plt.savefig(f'{i}_scatter.png', dpi=300)
+        plt.close()
+    
+    # **Heatmap of correlation**
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(df_clean.corr(), annot=True, cmap="coolwarm", fmt=".2f")
+    plt.title("Correlation Heatmap")
+    plt.savefig("correlation_heatmap.png", dpi=300)
+    plt.close()
+    
         
     #heatmap of correlation
-    sns.heatmap(df_clean.corr())
+    sns.heatmap(df_clean.corr(), annot=True)
 
 
 
