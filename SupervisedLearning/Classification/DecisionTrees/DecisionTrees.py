@@ -16,6 +16,7 @@ print()
 
 df_clean = df_clean[df_clean.columns].astype('float64')
 print(df_clean.isnull().sum())
+print(df_clean.corr)
 
 #uncomment the block for plotly (believe me it is pretty amazing)
 '''df_clean = df_clean.select_dtypes(include=['float64', 'int64'])  # Select only numerical columns
@@ -42,8 +43,24 @@ fig.show()'''
 #Data-Visualization 
 def visualization():
     print("The visualization process have been started")
-    sns.displot(df_clean['pH'])
-    sns.sublot(df_clean['pH'])
-    plt.show()
+    for i in df_clean.columns:
+        plt.title(f'Distribution check of {i}')
+    for i in df_clean.columns:
+        plt.figure(figsize = (6,4))
+    for i in df_clean.columns:    
+        sns.histplot(data=df_clean[i])
+    for i in df_clean.columns:    
+        sns.kdeplot(df_clean[i], fill=True, bw_adjust=0.5)
+    for i in df_clean.columns:    
+        sns.scatterplot(data=df_clean[i])
+    for i in df_clean.columns:    
+        plt.show(block=False)
+        
+    #heatmap of correlation
+    sns.heatmap(df_clean.corr())
+
+
+
+
 
 visualization()
