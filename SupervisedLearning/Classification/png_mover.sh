@@ -1,8 +1,8 @@
 #!/bin/bash
 
 
-SOURCE_DIR="$PWD"
-DEST_DIR="/mnt/data/MiscFiles/Datascience/SupervisedLearning/Classification/png_files"
+SOURCE_DIR="/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees"
+DEST_DIR="/mnt/data/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots"
 
 mkdir -p "$DEST_DIR"
 
