@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-SOURCE_DIR="/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees"
+SOURCE_DIR="/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees"
 DEST_DIR="/mnt/data/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots"
 
 mkdir -p "$DEST_DIR"
