@@ -5,6 +5,9 @@ import seaborn as sns
 from sklearn.tree import DecisionTreeClassifier
 import plotly.graph_objects as go
 import plotly.subplots as sp
+from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import RobustScaler
+from scipy.stats import boxcox
 
 df = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/WineQT.csv')
 df_clean = df.copy()
@@ -116,7 +119,6 @@ def outlier_detection():
     for i in df_clean.columns:
         for j in df_clean.index:
             if (df_clean.at[j, i] == 0):
-                print(f"Zero values found at {(j, i)}")
                 z.append((j, i))
             elif (df_clean.at[j, i] > upper_bound or df_clean.at[j,i] < lower_bound):
                 #print(f"IQR outlier values have been found here{df_clean.at[j, i]}")
@@ -135,8 +137,71 @@ def outlier_handling():
     #we will try other methods in case severe outliers happened 
     #it is pretty evident that some columns have extreme outliers
     
-    #we will fix outliers on the basis of extremities 
+    #we will fix outliers on the basis of extremities 1. Sulfur-Di-Oxide and total-sulfur dioxide 
+
     
-            
+    '''for index, values in enumerate(df_clean["total sulfur dioxide"]):
+        if (values > upper_bound or values < lower_bound):
+          df_clean.at[index, "total sulfur dioxide"] = df_clean["total sulfur dioxide"].mean()'''    
+    '''Key-Take away, the IQR based cleaning above will lead the box to shrink because 
+    the outlier datas are actually removed and replaced. But here in isolataaion forest we cap with 
+    numbers for identification(we essentially are hiding it). IN robust scaler it removes data and ensures no
+    spread actually occurs.'''
+    
+    plt.figure(figsize = (15, 15))
+    plt.xticks(rotation=45, ha = "right", fontsize=10)
+    sns.boxplot(data=df_clean)
+    plt.show()
+    plt.close()
+    
+    #outlier 
+    isolated_forest = IsolationForest(contamination="auto", random_state=42, n_estimators=100)
+    df_clean["outlier_score"] = isolated_forest.fit_predict(df_clean)
+    df_filtered = df_clean[df_clean["outlier_score"] == 1]
+    
+    #scaling
+    scaler = RobustScaler()
+    df_scaled = scaler.fit_transform(df_filtered)   
+    
+    #scaled data which is actually an numpy array must be turned into a pandas dataframe  
+    # Ensures that the restored DataFrame retains proper column names from the original dataset. 
+    # Prevents column mismatch issues when assigning transformed data.
+    df_filtered = pd.DataFrame(df_scaled, columns=df_clean.columns)
+    
+    #log transformation for highly skewed data
+    df_filtered["Total sulfur dioxide"] = np.log1p(df_filtered["total sulfur dioxide"])
+    
+    plt.figure(figsize = (15, 15))
+    plt.xticks(rotation=45, ha = "right", fontsize=10)
+    sns.boxplot(data=df_filtered)
+    plt.show(block = False)
+    
+    #df_filtered["residual sugar"], _ = boxcox(df_filtered["residual sugar"])
+    
+    '''
+    Applies Box-Cox transformation to "column_name" Modifies "column_name" directly by replacing its 
+    values The _ variable stores the lambda value, which determines the transformation power  Works only on positive values—data 
+    must be strictly positive (greater than 0
+    
+    Important: Box-Cox only works for strictly positive data. If you have zeros or negatives, you must shift values before applying the transformation.
+  
+    The Box-Cox transformation is like magical shrinking and stretching dust you sprinkle on your toys. It does two things: 🔹 Shrinks the biggest toys so they’re not overwhelming. 🔹 Stretches the tiny toys so they don’t get ignored.
+
+    After using the dust, your toy collection looks more balanced—kind of like how Box-Cox makes messy, uneven numbers become more uniform and easy to work with!
+    '''
+    
+    #for index, value in df_filtered["residual sugar"].items():
+    #    if (value < lower_bound or value > upper_bound):
+    #        df_filtered.at[index, "residual sugar"] = df_filtered["residual sugar"].mode()
+    #        print(f"Outlier found at index {index}, replacing with mean")
+
+        
+    plt.figure(figsize = (15, 15))
+    plt.xticks(rotation=45, ha = "right", fontsize=10)
+    sns.boxplot(data=df_filtered)
+    plt.show()
+    
+ 
 visualization()       
 outlier_detection()
+outlier_handling()
