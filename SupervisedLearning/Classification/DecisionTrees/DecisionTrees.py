@@ -194,12 +194,20 @@ def outlier_handling():
     #    if (value < lower_bound or value > upper_bound):
     #        df_filtered.at[index, "residual sugar"] = df_filtered["residual sugar"].mode()
     #        print(f"Outlier found at index {index}, replacing with mean")
-
-        
+    
+    global df
+    df = df_filtered
+    df_filtered["residual sugar"] = np.log1p(df_filtered["residual sugar"])
+    df_filtered["chlorides"] = np.log1p(df_filtered["chlorides"])
+    
     plt.figure(figsize = (15, 15))
     plt.xticks(rotation=45, ha = "right", fontsize=10)
     sns.boxplot(data=df_filtered)
     plt.show()
+    
+    #the difference can be observed via theses plots
+
+
     
  
 visualization()       
