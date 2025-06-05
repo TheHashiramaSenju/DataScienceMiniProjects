@@ -112,14 +112,31 @@ def outlier_detection():
     else:
         print("No missing values")
     
-    z,w,v = [],
+    z,w,v = [], [], []
     for i in df_clean.columns:
         for j in df_clean.index:
             if (df_clean.at[j, i] == 0):
-                print(f"Zero values found at {df_clean.at[j, i]}")
+                print(f"Zero values found at {(j, i)}")
                 z.append((j, i))
             elif (df_clean.at[j, i] > upper_bound or df_clean.at[j,i] < lower_bound):
-                print(f"IQR outlier values have been found here{df_clean.at[j, i]}")
+                #print(f"IQR outlier values have been found here{df_clean.at[j, i]}")
+                w.append((j,i))
+            else:
+                pass
+            mean = np.mean(df_clean[i])
+            std_dev = np.std(df_clean[i])
+            z_scores = (df_clean.at[j, i] - mean) / std_dev
+            v.append(z_scores)
+            if abs(z_scores) > 3:
+                v.append((j, i))
+                
+def outlier_handling():
+    #we got several 0 values at citric acid, but most of the values of citric acid are pretty close to 0, so imputing them with another value would be not good 
+    #we will try other methods in case severe outliers happened 
+    #it is pretty evident that some columns have extreme outliers
     
-
+    #we will fix outliers on the basis of extremities 
+    
+            
+visualization()       
 outlier_detection()
