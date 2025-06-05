@@ -154,6 +154,7 @@ def outlier_handling():
     plt.show()
     plt.close()
     
+    #1. Outlier handling -> data scaling -> data transformation
     #outlier 
     isolated_forest = IsolationForest(contamination="auto", random_state=42, n_estimators=100)
     df_clean["outlier_score"] = isolated_forest.fit_predict(df_clean)
