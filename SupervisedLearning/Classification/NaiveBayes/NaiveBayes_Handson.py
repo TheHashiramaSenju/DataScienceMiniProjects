@@ -93,7 +93,7 @@ for i in b:
 
 print(d)
 fig, ax = plt.subplots(figsize = (15, 15))
-sns.boxplot(data = dataNew, ax=ax)
+#sns.boxplot(data = dataNew, ax=ax)
 plt.savefig('boxPlot.jpg')
 
 #data cleaning is done
