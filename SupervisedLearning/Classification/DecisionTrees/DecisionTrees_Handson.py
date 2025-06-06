@@ -8,6 +8,8 @@ import plotly.subplots as sp
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import RobustScaler
 from scipy.stats import boxcox
+from sklearn.model_selection import train_test_split
+from sklearn import tree 
 
 df = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/WineQT.csv')
 df_clean = df.copy()
@@ -196,11 +198,12 @@ def outlier_handling():
     #        df_filtered.at[index, "residual sugar"] = df_filtered["residual sugar"].mode()
     #        print(f"Outlier found at index {index}, replacing with mean")
     
-    global df
-    df = df_filtered
+    global df2
+    df2 = df_filtered.copy()
     df_filtered["residual sugar"] = np.log1p(df_filtered["residual sugar"])
     df_filtered["chlorides"] = np.log1p(df_filtered["chlorides"])
     
+
     plt.figure(figsize = (15, 15))
     plt.xticks(rotation=45, ha = "right", fontsize=10)
     sns.boxplot(data=df_filtered)
@@ -209,8 +212,34 @@ def outlier_handling():
     #the difference can be observed via theses plots
 
 
+def implementation():
+    #splitting of data
+    X = df2.drop(columns='quality', axis=1)
+    y = df2['quality']
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    model = DecisionTreeClassifier()
+    
+    #model instantiation
+    model.fit(X_train, y_train)
+    
+    #model evaluvation, using trained model to make predictions on testing data 
+    #using the predict function
+    
+    #splite more like X train and y train and x test and y test. So trains with X datas and 
+    #comparing it with y test and later from learnt models we use x test and y test to check the accuracy of this 
+    #prediction model
+    
+    y_pred = model.predict(X_test)
+    #here on we can use evaluavtion metrics to better understand the data
+    
+    #model interpretation
+    #used for analyzing the decision making progress by visualization
+    
+    plt.figure(figsize=(15, 15))
+    tree.plot_tree(model, filled=True)
     
  
 visualization()       
 outlier_detection()
 outlier_handling()
+implementation()
