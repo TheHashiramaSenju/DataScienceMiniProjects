@@ -10,12 +10,12 @@ import os # For managing directories
 
 # --- Configuration ---
 # File path for the diabetes dataset (adjust as needed)
-DATA_PATH = '/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Regression/LogisticRegression/diabetes.csv'
+DATA_PATH = '/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Regression/LogisticRegression/diabetes.csv'
 OUTCOME_COL = 'Outcome' # The target variable column name
 # Columns where '0' logically represents a missing value in the raw data
 ZERO_AS_NAN_COLS = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
 # Directory to save visualizations and models
-OUTPUT_DIR = 'diabetes_model_output'
+'/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes' = 'diabetes_model_output'
 
 # --- 1. Data Collection / Ingestion ---
 def collect_data(file_path):
@@ -63,8 +63,8 @@ def preprocess_data(df_raw):
         df_clean[col] = df_clean[col].astype('float64')
 
     # Save imputation means for consistent preprocessing of new, unseen data
-    joblib.dump(imputation_means, os.path.join(OUTPUT_DIR, 'imputation_means.pkl'))
-    print(f"Imputation means saved to '{OUTPUT_DIR}/imputation_means.pkl'.")
+    joblib.dump(imputation_means, os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'imputation_means.pkl'))
+    print(f"Imputation means saved to '{'/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes'}/imputation_means.pkl'.")
 
     print("\nCleaned Data Descriptive Statistics (after preprocessing):")
     print(df_clean.describe())
@@ -83,26 +83,26 @@ def perform_eda(df_processed):
     plt.title('Box Plot of Features (Post Preprocessing)')
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
-    plt.savefig(os.path.join(OUTPUT_DIR, 'box_plot_processed_data.png'))
+    plt.savefig(os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'box_plot_processed_data.png'))
     plt.close()
-    print(f"Box plot saved to '{OUTPUT_DIR}/box_plot_processed_data.png'")
+    print(f"Box plot saved to '{'/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes'}/box_plot_processed_data.png'")
 
     # Histograms for feature distributions
     df_processed.drop(columns=[OUTCOME_COL]).hist(figsize=(12, 10), bins=20, edgecolor='black')
     plt.suptitle('Histograms of Features (Post Preprocessing)', y=1.02)
     plt.tight_layout(rect=[0, 0.03, 1, 0.98])
-    plt.savefig(os.path.join(OUTPUT_DIR, 'histograms_processed_data.png'))
+    plt.savefig(os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'histograms_processed_data.png'))
     plt.close()
-    print(f"Histograms saved to '{OUTPUT_DIR}/histograms_processed_data.png'")
+    print(f"Histograms saved to '{'/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes'}/histograms_processed_data.png'")
 
     # Correlation Heatmap
     plt.figure(figsize=(10, 8))
     sns.heatmap(df_processed.corr(), annot=True, cmap='coolwarm', fmt=".2f")
     plt.title('Correlation Heatmap of Processed Data')
     plt.tight_layout()
-    plt.savefig(os.path.join(OUTPUT_DIR, 'correlation_heatmap_processed_data.png'))
+    plt.savefig(os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'correlation_heatmap_processed_data.png'))
     plt.close()
-    print(f"Correlation heatmap saved to '{OUTPUT_DIR}/correlation_heatmap_processed_data.png'")
+    print(f"Correlation heatmap saved to '{'/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes'}/correlation_heatmap_processed_data.png'")
 
 # --- 4. Model Development / Training ---
 def train_model(X, y):
@@ -122,8 +122,8 @@ def train_model(X, y):
     print("\nGaussian Naive Bayes model trained successfully.")
 
     # Save the trained model
-    joblib.dump(model, os.path.join(OUTPUT_DIR, 'diabetes_model.pkl'))
-    print(f"Trained model saved to '{OUTPUT_DIR}/diabetes_model.pkl'.")
+    joblib.dump(model, os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'diabetes_model.pkl'))
+    print(f"Trained model saved to '{'/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes'}/diabetes_model.pkl'.")
 
     return model, X_test, y_test # Return test set for evaluation
 
@@ -150,13 +150,14 @@ def evaluate_model(model, X_test, y_test, X_full, y_full):
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                 xticklabels=['No Diabetes (0)', 'Diabetes (1)'],
                 yticklabels=['No Diabetes (0)', 'Diabetes (1)'])
+    
     plt.xlabel('Predicted Label')
     plt.ylabel('True Label')
     plt.title('Confusion Matrix for Gaussian Naive Bayes')
     plt.tight_layout()
-    plt.savefig(os.path.join(OUTPUT_DIR, 'confusion_matrix_gaussian_nb.png'))
+    plt.savefig(os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'confusion_matrix_gaussian_nb.png'))
     plt.close()
-    print(f"Confusion matrix saved to '{OUTPUT_DIR}/confusion_matrix_gaussian_nb.png'")
+    print(f"Confusion matrix saved to '{'/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes'}/confusion_matrix_gaussian_nb.png'")
 
     # Cross-Validation for Robustness
     print("\n--- Cross-Validation Performance (5-Fold) ---")
@@ -177,12 +178,12 @@ def load_prediction_assets():
     """
     print("\n--- Loading Prediction Assets ---")
     try:
-        model = joblib.load(os.path.join(OUTPUT_DIR, 'diabetes_model.pkl'))
-        imputation_means = joblib.load(os.path.join(OUTPUT_DIR, 'imputation_means.pkl'))
+        model = joblib.load(os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'diabetes_model.pkl'))
+        imputation_means = joblib.load(os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'imputation_means.pkl'))
         print("Prediction model and preprocessing means loaded successfully.")
         return model, imputation_means
     except FileNotFoundError:
-        print(f"Error: Model or imputation means not found in '{OUTPUT_DIR}'.")
+        print(f"Error: Model or imputation means not found in '{'/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes'}'.")
         print("Please ensure you've run the training pipeline first.")
         return None, None
 
@@ -305,7 +306,7 @@ def community_screening_tool(csv_file_path):
 
         screened_results_df = predict_batch_risk(model, imputation_means, community_df)
         
-        output_csv_path = os.path.join(OUTPUT_DIR, 'community_screening_results.csv')
+        output_csv_path = os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'community_screening_results.csv')
         screened_results_df.to_csv(output_csv_path, index=False)
         print(f"\nCommunity screening results saved to '{output_csv_path}'.")
 
@@ -325,7 +326,7 @@ def community_screening_tool(csv_file_path):
 # --- Main Pipeline Execution ---
 if __name__ == "__main__":
     # Create output directory if it doesn't exist
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', exist_ok=True)
 
     print("="*80)
     print("           DIABETES PREDICTION MODEL: END-TO-END PIPELINE         ")
@@ -385,7 +386,7 @@ if __name__ == "__main__":
         'Age': [25, 50, 20, 35]
     }
     dummy_community_df = pd.DataFrame(dummy_community_data)
-    dummy_csv_path = os.path.join(OUTPUT_DIR, 'dummy_community_screening_data.csv')
+    dummy_csv_path = os.path.join('/home/me/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/NaiveBayes', 'dummy_community_screening_data.csv')
     dummy_community_df.to_csv(dummy_csv_path, index=False)
     print(f"Dummy community screening data created at '{dummy_csv_path}'.")
 
