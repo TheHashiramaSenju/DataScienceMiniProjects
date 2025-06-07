@@ -10,6 +10,14 @@ from sklearn.preprocessing import RobustScaler
 from scipy.stats import boxcox
 from sklearn.model_selection import train_test_split
 from sklearn import tree 
+from sklearn.impute import IterativeImputer
+from sklearn.experimental import enable_iterative_imputer
+import joblib 
+
+#global variables
+fitted_scaler = None 
+trained_model = None
+fitted_imputer = None
 
 # Load dataset
 df = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/WineQT.csv')
@@ -90,6 +98,20 @@ def visualization():
     sns.violinplot(data=df_clean)
     plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/violinplot.png', dpi=300)
     plt.close()
+    
+def missing_values_imputer(df_input):
+    print("checking missing values for handling")
+    global fitted_imputer 
+    
+    cols_with_missing = df_input.columns[df_input.isnull().any()].tolist()
+    if not cols_with_missing:
+        print("No return vallues detected")
+        return df_input.copy()
+    
+    print(f"columns with missing values : {cols_with_missing}")
+    
+    #imputer for fitting the data 
+    imputer = IterativeImputer()
 
 # Outlier detection
 def outlier_detection():
