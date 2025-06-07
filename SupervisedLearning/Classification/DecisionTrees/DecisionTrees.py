@@ -111,7 +111,14 @@ def missing_values_imputer(df_input):
     print(f"columns with missing values : {cols_with_missing}")
     
     #imputer for fitting the data 
-    imputer = IterativeImputer()
+    imputer = IterativeImputer(max_iter=10, random_state=42, initial_strategy='mean', estimator=None)
+    fitted_imputer = imputer.fit(df_input)
+    df_imputed_array = fitted_imputer.transform(df_input)
+    
+    df_imputed = pd.DataFrame(df_imputed_array, columns=df_input.columns, index=df_input.index)
+    print("Missing values handled.")
+    print("Missing values after imputation:\n", df_imputed.isnull().sum())
+    return df_imputed
 
 # Outlier detection
 def outlier_detection():
