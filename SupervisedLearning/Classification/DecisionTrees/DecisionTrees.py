@@ -14,6 +14,9 @@ from sklearn.impute import IterativeImputer
 from sklearn.experimental import enable_iterative_imputer
 import joblib 
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+#yeo-johnson --> like box-cox but handles zeroes and negatives
+from sklearn.preprocessing import PowerTransformer
+
 #global variables
 fitted_scaler = None 
 trained_model = None
@@ -236,8 +239,9 @@ def implementation():
 
 # Run processes
 if __name__ == "__main__":
-    
+    print("--- Starting Training Pipeline---")
     visualization()       
+    
     outlier_detection()
     outlier_handling()
     implementation()
