@@ -229,6 +229,20 @@ def implementation():
     #comparing it with y test and later from learnt models we use x test and y test to check the accuracy of this 
     #prediction model
     
+    '''EDA & Skew Check
+
+    Histograms, KDEs, .skew(), QQ-plots.
+
+    Transform Skew (log1p / Box-Cox / YJ) →
+
+    Scale Features (Standard / MinMax / Robust / etc.) →
+
+    Detect & Filter Outliers (IsolationForest / LOF / etc.) →
+
+    Train Your Model (DecisionTree / RandomForest / SVM / …)'''
+
+
+    
     y_pred = model.predict(X_test)
     #here on we can use evaluavtion metrics to better understand the data
     
