@@ -13,7 +13,7 @@ from sklearn import tree
 from sklearn.impute import IterativeImputer
 from sklearn.experimental import enable_iterative_imputer
 import joblib 
-
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 #global variables
 fitted_scaler = None 
 trained_model = None
@@ -216,7 +216,7 @@ def implementation():
     sampleModel = DecisionTreeClassifier(random_state=42)
     sampleModel.fit(X_sample, y_sample)
 
-    plt.figure(figsize=(8,8))
+    plt.figure(figsize=(15,15))
     tree.plot_tree(
       sampleModel,
       feature_names = X_sample.columns,
@@ -226,9 +226,17 @@ def implementation():
     plt.title("Decision Tree on 50‐row Sample")
     plt.show()
 
+    y_pred = trained_model.predict(X_test)
+    print("Model evaluvation")
+    
+    print(f"accuracy on test set set : {accuracy_score(y_test, y_pred):.4f}")
+    print("\nClassification Report:\n", classification_report(y_test, y_pred))
+    print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+    print("Model evaluation complete.")
 
 # Run processes
 if __name__ == "__main__":
+    
     visualization()       
     outlier_detection()
     outlier_handling()
