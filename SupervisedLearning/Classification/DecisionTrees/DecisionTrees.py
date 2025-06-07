@@ -190,7 +190,7 @@ def analyze_outliers(df_input):
     print("Outlier analysis complete.")
 
 
-# --- 5. Outlier Handling and Feature Scaling ---
+#5. Outlier Handling and Feature Scaling
 def handle_outliers_and_scale(df_input):
     """
     Filters outliers using Isolation Forest, applies Robust Scaling,
