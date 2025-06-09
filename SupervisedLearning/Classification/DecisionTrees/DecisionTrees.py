@@ -212,15 +212,18 @@ def handle_outliers_and_scale(df_input):
     # Outlier detection and filtering using Isolation Forest
     isolated_forest = IsolationForest(contamination="auto", random_state=42, n_estimators=100)
     df_input["outlier_score"] = isolated_forest.fit_predict(df_input)
-    df_filtered = df_input[df_input["outlier_score"] == 1].copy() # Keep inliers only (a rather interesting one)
-
+    df_filtered = df_input[df_input["outlier_score"] == 1].copy() # Keep inliers only (a rather interesting one)  
+    
+    
     # Identify features for scaling (exclude target and outlier_score)
     features_to_scale = df_filtered.drop(columns=["quality", "outlier_score"], errors='ignore').columns
+    
 
     # Apply Robust Scaling - fit on filtered data, transform it
     scaler = RobustScaler()
     fitted_scaler = scaler.fit(df_filtered[features_to_scale]) # Fit and store the scaler
     df_scaled_array = fitted_scaler.transform(df_filtered[features_to_scale])
+      
 
     # Convert scaled features back to DataFrame
     df_processed = pd.DataFrame(df_scaled_array, columns=features_to_scale, index=df_filtered.index)
