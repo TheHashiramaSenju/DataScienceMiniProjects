@@ -54,7 +54,7 @@ def visualize_data(df_input):
         plt.xlabel(col)
         plt.ylabel('Frequency')
         plt.tight_layout()
-        plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/hist_{col}.png', dpi=150)
+        #plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/hist_{col}.png', dpi=150)
         plt.close()
 
         # Generate and save Scatterplots (vs. index)
@@ -64,7 +64,7 @@ def visualize_data(df_input):
         plt.xlabel('Index')
         plt.ylabel(col)
         plt.tight_layout()
-        plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/scatter_{col}.png', dpi=150)
+        #plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/scatter_{col}.png', dpi=150)
         plt.close()
 
         # Calculate IQR for each column (used for initial outlier detection)
@@ -80,7 +80,7 @@ def visualize_data(df_input):
     sns.heatmap(df_input.corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=.5)
     plt.title("Correlation Heatmap")
     plt.tight_layout()
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/heatmap.png', dpi=300)
+    #plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/heatmap.png', dpi=300)
     plt.close()
 
     # Generate and save Boxplot of all features
@@ -89,7 +89,7 @@ def visualize_data(df_input):
     plt.title("Initial Boxplot of Features (Before Preprocessing)")
     plt.xticks(rotation=45, ha="right", fontsize=10)
     plt.tight_layout()
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_initial.png', dpi=300)
+    #plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_initial.png', dpi=300)
     plt.close()
 
     # Generate and save Violin plot of all features
@@ -98,7 +98,7 @@ def visualize_data(df_input):
     plt.title("Initial Violin Plot of Features (Before Preprocessing)")
     plt.xticks(rotation=45, ha="right", fontsize=10)
     plt.tight_layout()
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/violinplot_initial.png', dpi=300)
+    #plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/violinplot_initial.png', dpi=300)
     plt.close()
     print("Data visualization complete. Plots saved to 'Plots' directory.")
 
@@ -206,13 +206,13 @@ def handle_outliers_and_scale(df_input):
     sns.boxplot(data=df_input.drop(columns='quality', errors='ignore')) # Exclude target for visualization
     plt.title("Boxplot Before Isolation Forest Filtering and Scaling")
     plt.tight_layout()
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_pre_isoforest.png', dpi=300)
+    #plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_pre_isoforest.png', dpi=300)
     plt.close()
 
     # Outlier detection and filtering using Isolation Forest
     isolated_forest = IsolationForest(contamination="auto", random_state=42, n_estimators=100)
     df_input["outlier_score"] = isolated_forest.fit_predict(df_input)
-    df_filtered = df_input[df_input["outlier_score"] == 1].copy() # Keep inliers only
+    df_filtered = df_input[df_input["outlier_score"] == 1].copy() # Keep inliers only (a rather interesting one)
 
     # Identify features for scaling (exclude target and outlier_score)
     features_to_scale = df_filtered.drop(columns=["quality", "outlier_score"], errors='ignore').columns
@@ -240,7 +240,7 @@ def handle_outliers_and_scale(df_input):
     sns.boxplot(data=df_processed.drop(columns=["quality", "outlier_score"], errors='ignore'))
     plt.title("Boxplot After Outlier Handling, Scaling, and Transformations")
     plt.tight_layout()
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_final.png', dpi=300)
+    #plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_final.png', dpi=300)
     plt.close()
 
     print("Outlier handling and scaling complete.")
@@ -274,7 +274,7 @@ def train_and_evaluate_model(df_processed):
                    filled=True, fontsize=8)
     plt.title("Full Decision Tree")
     plt.tight_layout()
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/full_dt.png', dpi=300)
+    #plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/full_dt.png', dpi=300)
     plt.close()
 
     # Plot a smaller sample decision tree for better readability
@@ -290,7 +290,7 @@ def train_and_evaluate_model(df_processed):
                    filled=True, fontsize=10)
     plt.title("Decision Tree on 50-row Sample")
     plt.tight_layout()
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/sample_dt.png', dpi=300)
+    ##plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/sample_dt.png', dpi=300)
     plt.close()
     print("Decision Tree training complete. Tree plots saved.")
 
