@@ -227,7 +227,7 @@ def handle_outliers_and_scale(df_input):
     # Re-add 'quality' and 'outlier_score' to the processed DataFrame
     df_processed["quality"] = df_filtered["quality"]
     df_processed["outlier_score"] = df_filtered["outlier_score"]
-
+ 
     # Apply log1p transformations for potentially skewed features (post-scaling)
     # These transformations should be consistent with training data when making predictions.
     for col in ["total sulfur dioxide", "residual sugar", "chlorides"]:
