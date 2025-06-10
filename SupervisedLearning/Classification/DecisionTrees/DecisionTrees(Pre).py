@@ -4,85 +4,164 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import RobustScaler, PowerTransformer # MODIFIED: Added PowerTransformer
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn import tree
-import joblib # Import joblib for saving/loading models
+import joblib # Used for saving/loading trained models and preprocessors
 from sklearn.experimental import enable_iterative_imputer # Required for IterativeImputer
 from sklearn.impute import IterativeImputer
 
-# --- GLOBAL VARIABLES TO STORE FITTED OBJECTS ---
-# This is usually done by returning them from functions or passing them around
-# For simplicity in this script, we'll assign them globally right after fitting.
+# --- Global Variables for Fitted Objects ---
+'''
+These variables will store the trained model and fitted preprocessors.
+Storing these globally allows them to be accessed and saved at the end of the pipeline.
+This is crucial for ensuring that new, unseen data can be processed
+identically during prediction, maintaining consistency between training and inference.
+'''
 fitted_scaler = None
 trained_model = None
-fitted_imputer = None # If you add imputation
+fitted_imputer = None
+fitted_power_transformer = None # MODIFIED: Added global variable for PowerTransformer
+lower_bound = None
+upper_bound = None
 
 
-# Load dataset
+# --- 1. Data Loading and Initial Inspection ---
+'''
+This is the foundational first step in any machine learning project.
+The goal is to get a preliminary understanding of the raw dataset.
+- Loading the CSV into a Pandas DataFrame.
+- Creating a `.copy()` to ensure that the original DataFrame remains untouched
+  throughout the preprocessing steps, preventing unintended modifications.
+- `df.describe()` provides a statistical summary (count, mean, std, min, quartiles, max)
+  of numerical columns, helping to spot data ranges, potential outliers, or inconsistencies.
+- `df.info()` gives a concise summary including data types, non-null counts, and memory usage.
+  This helps in identifying columns with missing values or incorrect data types.
+- Converting all columns to `float64` ensures numerical precision and consistency
+  for all subsequent mathematical operations and machine learning algorithms.
+- `df.corr()` generates the correlation matrix, showing linear relationships between features.
+  This is useful for early insights into feature dependencies.
+'''
+# Load the dataset
 df = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/WineQT.csv')
-df_clean = df.copy()
+df_clean = df.copy() # Create a working copy of the DataFrame
 
-# Feature analysis (unchanged for this part)
-print(df_clean.describe(), "\n")
-print(df_clean.info(), "\n")
+# Display basic data information and statistics
+print("--- Initial Data Analysis ---")
+print("DataFrame Description:\n", df_clean.describe(), "\n")
+print("DataFrame Info:\n", df_clean.info(), "\n")
+
+# Ensure all columns are numeric (float64) for consistent processing
 df_clean = df_clean[df_clean.columns].astype('float64')
-print(df_clean.corr())
+print("DataFrame Correlation Matrix:\n", df_clean.corr())
 
-# Data visualization (unchanged - plots are saved)
-def visualization():
-    print("Starting data visualization...")
-    global lower_bound, upper_bound # Define these globally as they are used in outlier_detection
-    for i in df_clean.columns:
-        # Save plots to avoid showing them during script run in background
+
+# --- 2. Data Visualization ---
+def visualize_data(df_input):
+    """
+    Generates and saves various plots for data distribution and relationships.
+    Calculates initial IQR bounds used for outlier detection.
+    
+    Why this way (Rationale):
+    - Exploratory Data Analysis (EDA) is crucial for building intuition about the data.
+      Visualizations help confirm or challenge assumptions from `describe()` and `info()`.
+    - Histograms: Show the distribution of individual features. This helps identify
+      skewness (e.g., if data is concentrated on one side), multimodality, or sparsity.
+    - Scatterplots (vs. index): Can reveal trends over the dataset's order or
+      unexpected patterns that might indicate issues in data collection or structure.
+    - Correlation Heatmap: Provides a quick visual summary of linear relationships
+      between all pairs of features. Strong correlations might suggest multicollinearity
+      or redundant features.
+    - Boxplots/Violin Plots: Excellent for visualizing the spread, median, quartiles,
+      and potential outliers for multiple numerical features side-by-side.
+      Violin plots add density estimation to boxplots, showing value distribution.
+    - These visualizations are performed *before* any transformations (imputation, scaling,
+      outlier removal) to showcase the raw state of the data, which is vital for documentation
+      and understanding initial data characteristics.
+    """
+    print("\n--- Starting Data Visualization ---")
+    global lower_bound, upper_bound # Used for IQR bounds in outlier_detection
+
+    for col in df_input.columns:
+        # Generate and save Histograms
         plt.figure(figsize=(6, 4))
-        sns.histplot(df_clean[i])
-        plt.title(f'Histogram of {i}')
-        plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/hist_{i}.png', dpi=150)
+        sns.histplot(df_input[col], kde=True)
+        plt.title(f'Histogram of {col}')
+        plt.xlabel(col)
+        plt.ylabel('Frequency')
+        plt.tight_layout()
+        #plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/hist_{col}.png', dpi=150)
         plt.close()
 
+        # Generate and save Scatterplots (vs. index)
         plt.figure(figsize=(6, 4))
-        sns.kdeplot(df_clean[i], fill=True, bw_adjust=0.5)
-        plt.title(f'KDE Plot of {i}')
-        plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/kde_{i}.png', dpi=150)
+        sns.scatterplot(y=df_input[col], x=range(len(df_input)))
+        plt.title(f'Scatterplot of {col}')
+        plt.xlabel('Index')
+        plt.ylabel(col)
+        plt.tight_layout()
+        #plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/scatter_{col}.png', dpi=150)
         plt.close()
 
-        plt.figure(figsize=(6, 4))
-        sns.scatterplot(y=df_clean[i], x=range(len(df_clean)))
-        plt.title(f'Scatterplot of {i}')
-        plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/scatter_{i}.png', dpi=150)
-        plt.close()
-
-        q1, q3 = df_clean[i].quantile([.25, .75])
+        # Calculate IQR for each column (used for initial outlier detection)
+        q1, q3 = df_input[col].quantile([.25, .75])
         IQR = q3 - q1
+        # Store bounds for the last column processed, or handle per-column
+        # For this context, assuming these are illustrative and not directly used for filtering in next step
         lower_bound = q1 - 1.5 * IQR
         upper_bound = q3 + 1.5 * IQR
 
-    plt.figure(figsize=(20, 20))
-    sns.heatmap(df_clean.corr(), annot=True, cmap="coolwarm", fmt=".2f")
+    # Generate and save Correlation Heatmap
+    plt.figure(figsize=(12, 10)) # Adjusted size for better display
+    sns.heatmap(df_input.corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=.5)
     plt.title("Correlation Heatmap")
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/heatmap.png', dpi=300)
+    plt.tight_layout()
+    #plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/heatmap.png', dpi=300)
     plt.close()
 
-    plt.figure(figsize=(15, 10)) # Adjusted size for better readability
+    # Generate and save Boxplot of all features
+    plt.figure(figsize=(15, 8))
+    sns.boxplot(data=df_input)
+    plt.title("Initial Boxplot of Features (Before Preprocessing)")
     plt.xticks(rotation=45, ha="right", fontsize=10)
-    sns.boxplot(data=df_clean)
-    plt.title("Initial Boxplot of Features")
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_initial.png', dpi=300)
+    plt.tight_layout()
+    #plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_initial.png', dpi=300)
     plt.close()
 
-    plt.figure(figsize=(15, 10)) # Adjusted size
+    # Generate and save Violin plot of all features
+    plt.figure(figsize=(15, 8))
+    sns.violinplot(data=df_input)
+    plt.title("Initial Violin Plot of Features (Before Preprocessing)")
     plt.xticks(rotation=45, ha="right", fontsize=10)
-    sns.violinplot(data=df_clean)
-    plt.title("Initial Violin Plot of Features")
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/violinplot_initial.png', dpi=300)
+    plt.tight_layout()
+    #plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/violinplot_initial.png', dpi=300)
     plt.close()
-    print("Data visualization complete.")
+    print("Data visualization complete. Plots saved to 'Plots' directory.")
 
-# Missing Value Imputation Function (New addition)
-def missing_value_imputation(df_input):
-    print("Checking for and handling missing values with Iterative Imputer...")
-    global fitted_imputer # To store the fitted imputer
+
+# --- 3. Missing Value Imputation ---
+def impute_missing_values(df_input):
+    """
+    Handles missing values using IterativeImputer.
+    Fits the imputer and stores it globally for consistent preprocessing.
+    
+    Workflow Rationale:
+    - Missing values MUST be handled before most machine learning models can be trained,
+      as they typically cannot work with NaN values.
+    - IterativeImputer (also known as MICE - Multiple Imputation by Chained Equations)
+      is chosen over simpler methods (like mean/median imputation) because it's
+      more sophisticated. It models each feature with missing values as a function
+      of other features in a round-robin fashion, providing more accurate estimates.
+    - This step occurs relatively early in the pipeline because accurate imputation
+      benefits from having as much context from other features as possible. Also,
+      outlier detection and scaling methods can be sensitive to missing values.
+    - The imputer is `fitted` on the data (even if no missing values are found in this run)
+      and stored globally, ensuring that if new data with missing values arrives for prediction,
+      the exact same imputation logic is applied.
+    """
+    print("\n--- Handling Missing Values ---")
+    global fitted_imputer
 
     # Identify columns with missing values
     cols_with_missing = df_input.columns[df_input.isnull().any()].tolist()
@@ -93,49 +172,60 @@ def missing_value_imputation(df_input):
 
     print(f"Columns with missing values: {cols_with_missing}")
 
-    # Initialize and fit the IterativeImputer
-    # We choose BayesianRidge as it's generally robust, but you can experiment
-    imputer = IterativeImputer(max_iter=10, random_state=42, initial_strategy='mean', estimator=None) # estimator=None uses BayesianRidge
-    fitted_imputer = imputer.fit(df_input) # Fit the imputer on the full dataset (or training set)
+    # Initialize and fit IterativeImputer
+    # BayesianRidge estimator is used by default if estimator=None
+    imputer = IterativeImputer(max_iter=10, random_state=42, initial_strategy='mean')
+    fitted_imputer = imputer.fit(df_input) # Fit imputer on the input DataFrame
     df_imputed_array = fitted_imputer.transform(df_input)
 
     df_imputed = pd.DataFrame(df_imputed_array, columns=df_input.columns, index=df_input.index)
 
-    print("Missing values handled.")
+    print("Missing values imputation complete.")
     print("Missing values after imputation:\n", df_imputed.isnull().sum())
     return df_imputed
 
 
-# Outlier detection (unchanged logic, but output modified to use global bounds)
-def outlier_detection():
-    print("Analyzing outliers...")
+# --- 4. Outlier Analysis (Informational) ---
+def analyze_outliers(df_input):
+    """
+    Analyzes and reports zero values, IQR-based, and Z-score-based outliers.
+    This function is for reporting and does not remove outliers at this stage.
+    
+    Workflow Rationale:
+    - This step serves as a diagnostic. It's important to understand the prevalence
+      of extreme values before deciding on a removal or capping strategy.
+    - It's done AFTER imputation, as missing values could skew outlier calculations
+      or appear as pseudo-outliers.
+    - This informational analysis helps to confirm whether the data contains
+      "true" outliers or if extreme values are expected given the feature's distribution.
+    - Various methods (zero values, IQR, Z-score) are used to provide a comprehensive view.
+      Zero values can be significant for certain features (e.g., `chlorides` might genuinely be zero).
+      IQR-based (Tukey's fences) and Z-score (standard deviations from mean) are common statistical measures.
+    """
+    print("\n--- Analyzing Outliers (Informational) ---")
 
-    # Identify missing values (now handled by missing_value_imputation)
-    # This block is now mostly for informational purposes, as NaN should be handled
-    null_locations = df_clean[df_clean.isnull().any(axis=1)]
-    if not null_locations.empty:
-        print("Rows with missing values before imputation:\n", null_locations)
+    # Check for missing values (should be handled by previous step)
+    if df_input.isnull().any().any():
+        print("Warning: Missing values still present. Review imputation step.")
     else:
-        print("No missing values detected before imputation.")
+        print("No missing values detected after imputation.")
 
-
-    # Detect zero values and outliers using IQR and Z-score (informational, not removal)
     zero_values_locs = []
     iqr_outliers_locs = []
     z_score_outliers_locs = []
 
-    for col_name in df_clean.columns:
-        # Assuming lower_bound and upper_bound were calculated in visualization() and are global
-        q1, q3 = df_clean[col_name].quantile([.25, .75])
+    for col_name in df_input.columns:
+        # Calculate IQR and Z-score for each column
+        q1, q3 = df_input[col_name].quantile([.25, .75])
         IQR = q3 - q1
         col_lower_bound = q1 - 1.5 * IQR
         col_upper_bound = q3 + 1.5 * IQR
 
-        mean = np.mean(df_clean[col_name])
-        std_dev = np.std(df_clean[col_name])
+        mean = np.mean(df_input[col_name])
+        std_dev = np.std(df_input[col_name])
 
-        for j in df_clean.index:
-            value = df_clean.at[j, col_name]
+        for j in df_input.index:
+            value = df_input.at[j, col_name]
             if value == 0:
                 zero_values_locs.append((j, col_name))
             if value > col_upper_bound or value < col_lower_bound:
@@ -146,180 +236,266 @@ def outlier_detection():
                     z_score_outliers_locs.append((j, col_name))
 
     if zero_values_locs:
-        print(f"\nDetected {len(zero_values_locs)} zero values at: {set(zero_values_locs)}")
+        print(f"\nDetected {len(set(zero_values_locs))} zero values.")
     else:
         print("\nNo zero values detected.")
 
     if iqr_outliers_locs:
-        print(f"Detected {len(iqr_outliers_locs)} IQR-based outliers at: {set(iqr_outliers_locs)}")
+        print(f"Detected {len(set(iqr_outliers_locs))} IQR-based outliers.")
     else:
         print("No IQR-based outliers detected.")
 
     if z_score_outliers_locs:
-        print(f"Detected {len(z_score_outliers_locs)} Z-score-based outliers at: {set(z_score_outliers_locs)}")
+        print(f"Detected {len(set(z_score_outliers_locs))} Z-score-based outliers.")
     else:
         print("No Z-score-based outliers detected.")
+    print("Outlier analysis complete.")
 
 
-# Outlier handling & scaling
-def outlier_handling(df_input):
-    print("Handling outliers and scaling data...")
-    global fitted_scaler, df2 # To store the fitted scaler and the processed dataframe
+#5. Outlier Handling and Feature Scaling
+def handle_outliers_and_scale(df_input):
+    """
+    Filters outliers using Isolation Forest, applies Robust Scaling,
+    and performs power transformations on specified features.
+    The fitted scaler and power transformer are stored globally.
+    
+    Workflow Rationale:
+    - Initial Boxplot: Visualizes feature distributions *before* outlier filtering/scaling.
+      This serves as a baseline to observe the impact of the subsequent steps.
+    - Outlier Filtering (Isolation Forest): Isolation Forest is an unsupervised anomaly detection
+      algorithm. It's particularly effective for high-dimensional data and doesn't make
+      assumptions about data distribution. Filtering outliers *before* scaling is a best practice
+      because extreme values can heavily influence the calculation of mean, standard deviation,
+      or even IQR, distorting the scaling process. By removing these anomalies, the subsequent
+      scaling becomes more accurate and representative of the 'normal' data.
+    - Robust Scaling (`RobustScaler`): Applied after outlier filtering. `RobustScaler` is chosen
+      because it scales features using the median and Interquartile Range (IQR) rather than
+      mean and standard deviation (like `StandardScaler`). This makes it inherently **robust to outliers**
+      that might still be present or that `IsolationForest` decided to keep. Scaling is critical
+      for many ML algorithms (especially distance-based ones or those using gradient descent)
+      to ensure all features contribute equally, preventing features with larger numerical ranges
+      from dominating the model.
+    - Power Transformation (`PowerTransformer` with `yeo-johnson`):
+      MODIFIED: Replaced `np.log1p` with `PowerTransformer`.
+      - **Why the change:** Your previous `np.log1p` encountered `inf` or `NaN` errors because
+        it's undefined for values <= 0. After `RobustScaler`, it's possible that some scaled
+        values became negative or zero. `PowerTransformer` (specifically the `yeo-johnson` method)
+        is designed to handle a wider range of input values, including zeros and negatives. It
+        automatically finds the optimal power parameter to transform data towards a more
+        Gaussian (normal) distribution. Many ML models assume or perform better with normally
+        distributed data. This step improves the model's ability to learn from skewed features.
+      - `standardize=False` is used to preserve the scaling already applied by `RobustScaler`.
+    - Debugging Checks: Added print statements to confirm that no NaNs or Infs remain after
+      all transformations. This is a critical quality control step.
+    - Last-resort `dropna`: A final safety measure to remove any remaining non-finite values.
+      Ideally, `PowerTransformer` should prevent this, but it acts as a safeguard against
+      unforeseen issues in the data.
+    - Final Boxplot: Visualizes the data *after* all preprocessing, allowing for a comparison
+      to the initial state and confirming the effects of scaling and transformation.
+    """
+    print("\n--- Handling Outliers and Scaling Data ---")
+    global fitted_scaler, fitted_power_transformer # MODIFIED: Added fitted_power_transformer to global scope
 
-    # Initial boxplot to visualize raw outliers (now uses df_input)
-    plt.figure(figsize=(15, 10))
+    # Initial boxplot before filtering
+    plt.figure(figsize=(15, 8))
     plt.xticks(rotation=45, ha="right", fontsize=10)
-    sns.boxplot(data=df_input)
+    sns.boxplot(data=df_input.drop(columns='quality', errors='ignore')) # Exclude target for visualization
     plt.title("Boxplot Before Isolation Forest Filtering and Scaling")
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_pre_isoforest.png', dpi=300)
+    plt.tight_layout()
+    #plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_pre_isoforest.png', dpi=300)
     plt.close()
 
-    # Outlier detection using Isolation Forest
+    # Outlier detection and filtering using Isolation Forest
     isolated_forest = IsolationForest(contamination="auto", random_state=42, n_estimators=100)
-    # Fit and predict on the *input* DataFrame
     df_input["outlier_score"] = isolated_forest.fit_predict(df_input)
-    df_filtered = df_input[df_input["outlier_score"] == 1].copy() # Use .copy() to avoid SettingWithCopyWarning
+    df_filtered = df_input[df_input["outlier_score"] == 1].copy() # Keep inliers only
 
-    # Apply Robust Scaling
+    # Identify features for scaling (exclude target and outlier_score)
+    features_to_process = df_filtered.drop(columns=["quality", "outlier_score"], errors='ignore').columns
+
+    # Apply Robust Scaling - fit on filtered data, transform it
     scaler = RobustScaler()
-    # Fit the scaler on the *filtered* data and then transform it
-    # We fit only on features, excluding 'quality' and 'outlier_score'
-    features_to_scale = df_filtered.drop(columns=["quality", "outlier_score"], errors='ignore').columns
-    fitted_scaler = scaler.fit(df_filtered[features_to_scale]) # Store the fitted scaler
-    df_scaled_array = fitted_scaler.transform(df_filtered[features_to_scale])
+    fitted_scaler = scaler.fit(df_filtered[features_to_process]) # Fit and store the scaler
+    df_scaled_array = fitted_scaler.transform(df_filtered[features_to_process])
 
-    # Convert scaled data back into a DataFrame, keeping 'quality' and 'outlier_score'
-    df_filtered_scaled = pd.DataFrame(df_scaled_array, columns=features_to_scale, index=df_filtered.index)
-    # Add back 'quality' and 'outlier_score'
-    df_filtered_scaled["quality"] = df_filtered["quality"]
-    df_filtered_scaled["outlier_score"] = df_filtered["outlier_score"]
+    # Convert scaled features back to DataFrame
+    df_processed = pd.DataFrame(df_scaled_array, columns=features_to_process, index=df_filtered.index)
+
+    # MODIFIED START: Replaced log1p with PowerTransformer
+    # Apply Power Transformation for potentially skewed features (post-scaling)
+    # PowerTransformer handles values that are non-positive or zero robustly.
+    power_transformer = PowerTransformer(method='yeo-johnson', standardize=False)
+    fitted_power_transformer = power_transformer # Store globally
+
+    cols_for_power_transform = ["total sulfur dioxide", "residual sugar", "chlorides"]
+    for col in cols_for_power_transform:
+        if col in df_processed.columns:
+            # Reshape the single column to a 2D array as required by fit_transform
+            df_processed[col] = power_transformer.fit_transform(df_processed[[col]])[:,0]
+    # MODIFIED END
+
+    # Re-add 'quality' and 'outlier_score' to the processed DataFrame
+    df_processed["quality"] = df_filtered["quality"]
+    df_processed["outlier_score"] = df_filtered["outlier_score"]
+
+    # --- Debugging checks after all transformations ---
+    print("\n--- Checking for NaNs/Infs after all transformations ---")
+    print("NaNs in df_processed (final):\n", df_processed.isnull().sum())
+    print("Infs in df_processed (final):\n", df_processed.isin([np.inf, -np.inf]).sum())
+
+    # If any NaNs/Infs still exist, convert to NaN and drop rows as a last resort
+    initial_rows = len(df_processed)
+    df_processed.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df_processed.dropna(inplace=True)
+    if len(df_processed) < initial_rows:
+        print(f"Warning: Dropped {initial_rows - len(df_processed)} rows containing NaNs or Infs after transformations.")
 
 
-    # Log transformation for skewed data (only for features that might be skewed)
-    # Apply to the *scaled* features where appropriate
-    # NOTE: You should have already checked for skewness during visualization
-    # We apply log1p *after* scaling, if the scaled data still exhibits skewness.
-    # It's more common to do transformations *before* scaling if the transformation itself
-    # is meant to normalize the distribution for the benefit of the scaler or the model.
-    # Let's adjust this for clarity: transformations usually happen *before* scaling for numerical features.
-    # However, if features were scaled to a robust range (e.g. median 0, IQR 1) and then log-transformed,
-    # the interpretation of log1p might change.
-    # Given your original code structure, let's keep it here but note best practice:
-    # Transformations like boxcox/log should ideally precede scaling unless the goal is to make the scaled features more normal.
-
-    # Re-apply log transformations *after* scaling, if necessary.
-    # Ensure these columns exist in df_filtered_scaled.
-    # We are applying them on the *transformed* scaled data.
-    # IMPORTANT: The model will expect these transformations on *new* data too.
-    if "total sulfur dioxide" in df_filtered_scaled.columns:
-        df_filtered_scaled["total sulfur dioxide"] = np.log1p(df_filtered_scaled["total sulfur dioxide"])
-    if "residual sugar" in df_filtered_scaled.columns:
-        df_filtered_scaled["residual sugar"] = np.log1p(df_filtered_scaled["residual sugar"])
-    if "chlorides" in df_filtered_scaled.columns:
-        df_filtered_scaled["chlorides"] = np.log1p(df_filtered_scaled["chlorides"])
-
-    df2 = df_filtered_scaled.copy() # Store the fully processed dataframe for model training
-
-    # Final visualization of cleaned dataset
-    plt.figure(figsize=(15, 10))
+    # Final boxplot of processed data
+    plt.figure(figsize=(15, 8))
     plt.xticks(rotation=45, ha="right", fontsize=10)
-    sns.boxplot(data=df2.drop(columns=["quality", "outlier_score"], errors='ignore')) # Exclude target/score for boxplot
+    sns.boxplot(data=df_processed.drop(columns=["quality", "outlier_score"], errors='ignore'))
     plt.title("Boxplot After Outlier Handling, Scaling, and Transformations")
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_final.png', dpi=300)
+    plt.tight_layout()
+    #plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/boxplot_final.png', dpi=300)
     plt.close()
+
     print("Outlier handling and scaling complete.")
-    return df2 # Return the processed DataFrame
+    return df_processed # Return the fully processed DataFrame
 
-# Model implementation using Decision Trees
-def implementation(df_processed):
-    print("Training Decision Tree model...")
-    global trained_model # To store the trained model
 
-    X = df_processed.drop(columns=["quality", "outlier_score"], errors='ignore') # Exclude outlier_score from features
+# --- 6. Model Training and Evaluation ---
+def train_and_evaluate_model(df_processed):
+    """
+    Trains a Decision Tree Classifier, evaluates its performance,
+    and plots the decision trees. The trained model is stored globally.
+    
+    Workflow Rationale:
+    - Define Features (X) and Target (y): Clearly separating predictors from the variable
+      to be predicted (`quality`). `outlier_score` is also excluded as it's a transient column.
+    - Train-Test Split: This is a cornerstone of robust machine learning. It splits the data
+      into a training set (used to train the model) and a test set (unseen data used for evaluation).
+      This prevents overfitting, where a model performs well on training data but poorly on new data.
+      `random_state` ensures reproducibility of the split.
+    - Initialize and Train Model: `DecisionTreeClassifier` is a powerful and interpretable
+      classification algorithm. `random_state` ensures reproducibility of the tree's structure.
+      The model is `fitted` (trained) on the `X_train` and `y_train` data.
+    - Plot Decision Trees: Visualizing the tree helps in understanding the decision rules
+      the model has learned. A full tree can be complex, so a sample tree provides
+      a more readable illustration.
+    - Model Evaluation:
+      - `accuracy_score`: Provides a simple measure of overall correct predictions.
+      - `classification_report`: More detailed, showing precision, recall, and F1-score
+        for each class. This is crucial for understanding performance on imbalanced classes.
+      - `confusion_matrix`: Shows the counts of true positives, true negatives, false positives,
+        and false negatives, allowing for a deeper analysis of specific prediction errors.
+    - Return Feature Names: Essential for consistent prediction in deployment, ensuring
+      that input data for prediction has features in the same order as the training data.
+    """
+    print("\n--- Training Decision Tree Model ---")
+    global trained_model
+
+    # Define features (X) and target (y)
+    X = df_processed.drop(columns=["quality", "outlier_score"], errors='ignore')
     y = df_processed["quality"]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) # Added test_size for clarity
+
+    # Split data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Initialize and train the Decision Tree Classifier
     model = DecisionTreeClassifier(random_state=42)
-    trained_model = model.fit(X_train, y_train) # Store the trained model
+    trained_model = model.fit(X_train, y_train) # Fit and store the trained model
 
-    # 1) Plot the full‐data decision tree
-    plt.figure(figsize=(20,15)) # Increased size for better readability
-    tree.plot_tree(trained_model, feature_names=X.columns, class_names=[str(c) for c in trained_model.classes_], filled=True, fontsize=8)
+    # Plot the full decision tree
+    plt.figure(figsize=(20, 15))
+    tree.plot_tree(trained_model, feature_names=X.columns,
+                   class_names=[str(c) for c in trained_model.classes_],
+                   filled=True, fontsize=8)
     plt.title("Full Decision Tree")
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/full_dt.png', dpi=300)
+    plt.tight_layout()
+    #plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/full_dt.png', dpi=300)
     plt.close()
 
-    # 2) Now train & plot on a small sample if you want a “zoomed‐in” tree
-    sampleData = df_processed.sample(50, random_state=42) # pick 50 random rows
-    X_sample = sampleData.drop(columns=["quality", "outlier_score"], errors='ignore')
-    y_sample = sampleData["quality"]
-    sampleModel = DecisionTreeClassifier(random_state=42)
-    sampleModel.fit(X_sample, y_sample)
+    # Plot a smaller sample decision tree for better readability
+    sample_df = df_processed.sample(50, random_state=42)
+    X_sample = sample_df.drop(columns=["quality", "outlier_score"], errors='ignore')
+    y_sample = sample_df["quality"]
+    sample_model = DecisionTreeClassifier(random_state=42)
+    sample_model.fit(X_sample, y_sample)
 
-    plt.figure(figsize=(12,12)) # Adjusted size
-    tree.plot_tree(
-      sampleModel,
-      feature_names = X_sample.columns,
-      class_names   = [str(c) for c in sampleModel.classes_],
-      filled        = True,
-      fontsize      = 10
-    )
+    plt.figure(figsize=(12, 12))
+    tree.plot_tree(sample_model, feature_names=X_sample.columns,
+                   class_names=[str(c) for c in sample_model.classes_],
+                   filled=True, fontsize=10)
     plt.title("Decision Tree on 50-row Sample")
-    plt.savefig('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/sample_dt.png', dpi=300)
+    plt.tight_layout()
+    ##plt.savefig(f'/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/DecisionTrees/Plots/sample_dt.png', dpi=300)
     plt.close()
-    print("Decision Tree training complete. Plots saved.")
+    print("Decision Tree training complete. Tree plots saved.")
 
-    # Model Evaluation (Crucial!)
-    from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-
-    y_pred = trained_model.predict(X_test)
+    # Evaluate the model on the test set
     print("\n--- Model Evaluation ---")
+    y_pred = trained_model.predict(X_test)
     print(f"Accuracy on test set: {accuracy_score(y_test, y_pred):.4f}")
-    print("\nClassification Report:\n", classification_report(y_test, y_pred))
-    print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+    print("Classification Report:\n", classification_report(y_test, y_pred))
+    print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
     print("Model evaluation complete.")
 
+    # Return feature names, essential for consistent prediction
+    return X.columns.tolist()
 
-# Run processes and save artifacts
+
+# --- Main Execution Block ---
 if __name__ == "__main__":
-    print("--- Starting Training Pipeline ---")
-    visualization()
-    # Ensure df_clean is available globally or passed
-    df_clean = missing_value_imputation(df_clean) # Impute missing values first
+    print("\n--- Starting Machine Learning Training Pipeline ---")
 
-    # Update df_clean for outlier_detection to reflect imputed values
-    # Note: The outlier_detection function as written is more for reporting,
-    # and doesn't modify df_clean. The actual filtering happens in outlier_handling.
-    outlier_detection() # This function still uses df_clean (global) for info
+    # Run data visualization
+    visualize_data(df_clean)
 
-    df_processed_for_model = outlier_handling(df_clean) # Pass the imputed df
-    implementation(df_processed_for_model)
+    # Handle missing values
+    df_clean = impute_missing_values(df_clean)
 
-    # --- SAVE FITTED OBJECTS ---
+    # Analyze outliers (informational)
+    analyze_outliers(df_clean)
+
+    # Handle outliers, scale features, and apply transformations
+    df_processed_for_model = handle_outliers_and_scale(df_clean)
+
+    # Train and evaluate the Decision Tree model
+    feature_names = train_and_evaluate_model(df_processed_for_model)
+
+    # --- Save Fitted Objects ---
+    '''
+    Saving the fitted model and all preprocessors is crucial for deployment.
+    This ensures that when you get new, unseen data for prediction, you can:
+    1. Load these saved objects.
+    2. Apply the exact same preprocessing steps (imputation, scaling, transformation)
+       that were learned from the training data.
+    3. Feed the consistently processed new data to the trained model for accurate predictions.
+    `joblib` is preferred over `pickle` for large NumPy arrays and scikit-learn objects
+    due to its efficiency.
+    '''
     print("\n--- Saving Fitted Objects ---")
     try:
         joblib.dump(trained_model, 'decision_tree_model.joblib')
         print("Decision Tree model saved as 'decision_tree_model.joblib'")
 
-        # Ensure scaler is fitted and available globally.
-        # It's better to pass it or return it from `outlier_handling`.
         if fitted_scaler:
             joblib.dump(fitted_scaler, 'robust_scaler.joblib')
             print("Robust Scaler saved as 'robust_scaler.joblib'")
-        else:
-            print("Robust Scaler not fitted or not assigned to `fitted_scaler`. Cannot save.")
 
         if fitted_imputer:
             joblib.dump(fitted_imputer, 'iterative_imputer.joblib')
             print("Iterative Imputer saved as 'iterative_imputer.joblib'")
-        else:
-            print("Iterative Imputer not fitted or not assigned to `fitted_imputer`. Cannot save.")
 
-        # Save feature names as well, essential for consistent prediction
-        feature_names = df_processed_for_model.drop(columns=["quality", "outlier_score"], errors='ignore').columns.tolist()
+        if fitted_power_transformer: # MODIFIED: Saving the PowerTransformer
+            joblib.dump(fitted_power_transformer, 'power_transformer.joblib')
+            print("Power Transformer saved as 'power_transformer.joblib'")
+
         joblib.dump(feature_names, 'feature_names.joblib')
         print("Feature names saved as 'feature_names.joblib'")
 
     except Exception as e:
-        print(f"Error saving objects: {e}")
+        print(f"Error saving objects: {e}. Please check permissions and path.")
 
-    print("--- Training Pipeline Complete ---")
+    print("\n--- Machine Learning Training Pipeline Complete ---")
