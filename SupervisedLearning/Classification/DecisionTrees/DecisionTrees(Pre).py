@@ -121,7 +121,7 @@ def visualize_data(df_input):
     plt.close()
 
     # Generate and save Boxplot of all features
-    plt.figure(figsize=(15, 8))
+    plt.figure(figsize=(15, 8))  
     sns.boxplot(data=df_input)
     plt.title("Initial Boxplot of Features (Before Preprocessing)")
     plt.xticks(rotation=45, ha="right", fontsize=10)
