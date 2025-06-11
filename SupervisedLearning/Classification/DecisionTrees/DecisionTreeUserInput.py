@@ -43,7 +43,7 @@ def get_user_input(feature_names):
     for feature in feature_names:
         # Loop until valid numerical input is received
         while True:
-            try:
+            try: 
                 value = float(input(f"Enter value for '{feature}': "))
                 user_data[feature] = value
                 break # Exit loop if input is valid
