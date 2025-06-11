@@ -344,7 +344,7 @@ def handle_outliers_and_scale(df_input):
     print("Infs in df_processed (final):\n", df_processed.isin([np.inf, -np.inf]).sum()) 
 
     # If any NaNs/Infs still exist, convert to NaN and drop rows as a last resort
-    initial_rows = len(df_processed)
+    initial_rows = len(df_processed)  
     df_processed.replace([np.inf, -np.inf], np.nan, inplace=True)
     df_processed.dropna(inplace=True)
     if len(df_processed) < initial_rows:
