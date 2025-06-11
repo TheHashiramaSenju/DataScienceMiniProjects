@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import RobustScaler, PowerTransformer # Added PowerTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn import tree
@@ -18,6 +18,7 @@ from sklearn.impute import IterativeImputer
 fitted_scaler = None
 trained_model = None
 fitted_imputer = None
+fitted_power_transformer = None # Added global variable for PowerTransformer
 lower_bound = None
 upper_bound = None
 
@@ -134,6 +135,7 @@ def impute_missing_values(df_input):
     return df_imputed
 
 
+
 # --- 4. Outlier Analysis (Informational) ---
 def analyze_outliers(df_input):
     """
@@ -194,11 +196,11 @@ def analyze_outliers(df_input):
 def handle_outliers_and_scale(df_input):
     """
     Filters outliers using Isolation Forest, applies Robust Scaling,
-    and performs log transformations on specified features.
-    The fitted scaler is stored globally.
+    and performs power transformations on specified features.
+    The fitted scaler and power transformer are stored globally.
     """
     print("\n--- Handling Outliers and Scaling Data ---")
-    global fitted_scaler
+    global fitted_scaler, fitted_power_transformer # Added fitted_power_transformer here
 
     # Initial boxplot before filtering
     plt.figure(figsize=(15, 8))
@@ -212,30 +214,46 @@ def handle_outliers_and_scale(df_input):
     # Outlier detection and filtering using Isolation Forest
     isolated_forest = IsolationForest(contamination="auto", random_state=42, n_estimators=100)
     df_input["outlier_score"] = isolated_forest.fit_predict(df_input)
-    df_filtered = df_input[df_input["outlier_score"] == 1].copy() # Keep inliers only (a rather interesting one)  
-    
-    
+    df_filtered = df_input[df_input["outlier_score"] == 1].copy() # Keep inliers only
+
     # Identify features for scaling (exclude target and outlier_score)
-    features_to_scale = df_filtered.drop(columns=["quality", "outlier_score"], errors='ignore').columns
-    
+    features_to_process = df_filtered.drop(columns=["quality", "outlier_score"], errors='ignore').columns
 
     # Apply Robust Scaling - fit on filtered data, transform it
     scaler = RobustScaler()
-    fitted_scaler = scaler.fit(df_filtered[features_to_scale]) # Fit and store the scaler
-    df_scaled_array = fitted_scaler.transform(df_filtered[features_to_scale])
-      
+    fitted_scaler = scaler.fit(df_filtered[features_to_process]) # Fit and store the scaler
+    df_scaled_array = fitted_scaler.transform(df_filtered[features_to_process])
 
     # Convert scaled features back to DataFrame
-    df_processed = pd.DataFrame(df_scaled_array, columns=features_to_scale, index=df_filtered.index)
+    df_processed = pd.DataFrame(df_scaled_array, columns=features_to_process, index=df_filtered.index)
+
+    # Apply Power Transformation for potentially skewed features (post-scaling)
+    # PowerTransformer handles values that are non-positive or zero robustly.
+    power_transformer = PowerTransformer(method='yeo-johnson', standardize=False)
+    fitted_power_transformer = power_transformer # Store globally
+
+    cols_for_power_transform = ["total sulfur dioxide", "residual sugar", "chlorides"]
+    for col in cols_for_power_transform:
+        if col in df_processed.columns:
+            # Reshape the single column to a 2D array as required by fit_transform
+            df_processed[col] = power_transformer.fit_transform(df_processed[[col]])[:,0]
+
     # Re-add 'quality' and 'outlier_score' to the processed DataFrame
     df_processed["quality"] = df_filtered["quality"]
     df_processed["outlier_score"] = df_filtered["outlier_score"]
- 
-    # Apply log1p transformations for potentially skewed features (post-scaling)
-    # These transformations should be consistent with training data when making predictions.
-    for col in ["total sulfur dioxide", "residual sugar", "chlorides"]:
-        if col in df_processed.columns:
-            df_processed[col] = np.log1p(df_processed[col])
+
+    # --- Debugging checks after all transformations ---
+    print("\n--- Checking for NaNs/Infs after all transformations ---")
+    print("NaNs in df_processed (final):\n", df_processed.isnull().sum())
+    print("Infs in df_processed (final):\n", df_processed.isin([np.inf, -np.inf]).sum())
+
+    # If any NaNs/Infs still exist, convert to NaN and drop rows as a last resort
+    initial_rows = len(df_processed)
+    df_processed.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df_processed.dropna(inplace=True)
+    if len(df_processed) < initial_rows:
+        print(f"Warning: Dropped {initial_rows - len(df_processed)} rows containing NaNs or Infs after transformations.")
+
 
     # Final boxplot of processed data
     plt.figure(figsize=(15, 8))
@@ -341,6 +359,10 @@ if __name__ == "__main__":
         if fitted_imputer:
             joblib.dump(fitted_imputer, 'iterative_imputer.joblib')
             print("Iterative Imputer saved as 'iterative_imputer.joblib'")
+
+        if fitted_power_transformer: # Saving the PowerTransformer
+            joblib.dump(fitted_power_transformer, 'power_transformer.joblib')
+            print("Power Transformer saved as 'power_transformer.joblib'")
 
         joblib.dump(feature_names, 'feature_names.joblib')
         print("Feature names saved as 'feature_names.joblib'")
