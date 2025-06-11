@@ -341,7 +341,7 @@ def handle_outliers_and_scale(df_input):
     # --- Debugging checks after all transformations ---
     print("\n--- Checking for NaNs/Infs after all transformations ---")
     print("NaNs in df_processed (final):\n", df_processed.isnull().sum())
-    print("Infs in df_processed (final):\n", df_processed.isin([np.inf, -np.inf]).sum())
+    print("Infs in df_processed (final):\n", df_processed.isin([np.inf, -np.inf]).sum()) 
 
     # If any NaNs/Infs still exist, convert to NaN and drop rows as a last resort
     initial_rows = len(df_processed)
