@@ -291,7 +291,7 @@ def handle_outliers_and_scale(df_input):
       Ideally, `PowerTransformer` should prevent this, but it acts as a safeguard against
       unforeseen issues in the data.
     - Final Boxplot: Visualizes the data *after* all preprocessing, allowing for a comparison
-      to the initial state and confirming the effects of scaling and transformation.
+      to the initial state and confirming the effects of scaling and transformation. 
     """
     print("\n--- Handling Outliers and Scaling Data ---")
     global fitted_scaler, fitted_power_transformer # MODIFIED: Added fitted_power_transformer to global scope
