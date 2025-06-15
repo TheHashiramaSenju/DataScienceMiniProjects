@@ -205,7 +205,7 @@ def analyze_outliers(df_input):
     print("\n--- Analyzing Outliers (Informational) ---")
 
     # Check for missing values (should be handled by previous step)
-    if df_input.isnull().any().any():
+    if df_input.isnull().any().any(): 
         print("Warning: Missing values still present. Review imputation step.")
     else:
         print("No missing values detected after imputation.")
