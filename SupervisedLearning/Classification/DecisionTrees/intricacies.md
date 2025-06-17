@@ -1,6 +1,6 @@
 
 
-# Conversations with Co-pilot for Understandinf purposes 
+# Conversations with Co-pilot for Understanding purposes 
 
 ## 🚀 Part 1: Advanced Outlier Handling Techniques & Their Effectiveness
 
