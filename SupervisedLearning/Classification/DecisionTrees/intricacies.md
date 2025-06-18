@@ -405,6 +405,24 @@ This table connects preprocessing techniques to the specific data visualizations
 | **PolynomialFeatures** | **Scatter Plot** with Regression Lines | Plot the original feature vs. the target. Fit a simple linear regression line. Then, fit a model with polynomial features and plot its line. You'll visually see the line change from straight to curved, showing you've captured the non-linearity. |
 | **Cyclical Transform** | **Scatter Plot** | After creating the `sin` and `cos` features, plot them against each other (`plt.scatter(df['hour_sin'], df['hour_cos'])`). The result will be a perfect circle, confirming your transformation worked correctly. |
 
+### 5. The imputations collective 
+
+### The Complete Missing Value Imputation Toolkit
+
+This table covers the primary methods for handling missing (`NaN`) data. Choosing the right one depends on the nature of your data and the assumptions you can make about why the values are missing.
+
+| Imputation Method | How It Works (The Intuition) | When to Use (Ideal Scenario) | Why It Works (The Hidden Gem) |
+| :--- | :--- | :--- | :--- |
+| **--- SIMPLE & DIRECT METHODS ---** | | | |
+| `SimpleImputer` | Fills all missing values with a single statistic: `mean`, `median`, `most_frequent` (mode), or a `constant`. | The quickest and simplest fix. A good baseline for minimal, randomly missing data. | It's extremely fast and easy to understand. Using `strategy='median'` is surprisingly robust for skewed data and is often a better default than `mean`. |
+| **`pandas.fillna(method='ffill'/'bfill')`** | **Forward Fill (`ffill`)**: Fills a `NaN` with the last valid observation.<br>**Backward Fill (`bfill`)**: Fills a `NaN` with the next valid observation. | **Essential for Time-Series data.** When data points are ordered by time, the most recent value is often the best guess for the current missing value. | This method respects the temporal sequence of your data, which univariate statistics like the mean would completely ignore. |
+| **--- MODEL-BASED METHODS ---** | | | |
+| `KNNImputer` | Fills a missing value using the weighted average of its 'k' nearest neighbors (the 'k' most similar rows). | When you believe rows with similar known features should also have similar values for the feature with missing data. | It captures the **local structure** of the data. Instead of a global average, it uses a highly relevant local average, leading to more realistic imputations. |
+| `IterativeImputer` (MICE) | Models each feature as a function of all other features to predict missing values in a round-robin cycle until they converge. | **The best general-purpose, high-accuracy choice.** Use when features are correlated, and you want the most plausible imputations. | It's a **multivariate** approach. Unlike other methods, it leverages the relationships *between columns* to inform its predictions, making it incredibly powerful and accurate. |
+| **Matrix Factorization** (e.g., `fancyimpute.SoftImpute`) | Decomposes the data matrix into lower-dimensional matrices to find latent patterns and uses them to reconstruct the missing cells. | High-dimensional data where you suspect underlying patterns, like in recommendation systems or bioinformatics. | **(Advanced Hidden Gem)** It can work remarkably well even when a large percentage of the data is missing, as long as a coherent underlying structure (low-rank matrix) exists. |
+| **--- FEATURE ENGINEERING FOR MISSINGNESS ---** | | | |
+| `MissingIndicator` | **Does not fill data.** Instead, it creates a new binary column that simply marks (`True`/`False`) whether a value was missing in the original data. | When the *fact that a value is missing* is itself a predictive signal (e.g., a customer not filling out an optional field might be meaningful). | **(Powerful Hidden Gem)** This allows your model to learn if "missingness" itself is predictive. It can be used alongside another imputer to give your model the most possible information. |
+
 
 ## 🚀 Part 6: The Full Data Cleaning Pipeline (Putting It All Together)
 
