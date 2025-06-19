@@ -7,7 +7,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import RobustScaler, PowerTransformer # MODIFIED: Added PowerTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn import tree
+from sklearn import treeimport
 import joblib # Used for saving/loading trained models and preprocessors
 from sklearn.experimental import enable_iterative_imputer # Required for IterativeImputer
 from sklearn.impute import IterativeImputer
@@ -168,7 +168,7 @@ def impute_missing_values(df_input):
 
     if not cols_with_missing:
         print("No missing values detected. Skipping imputation.")
-        return df_input.copy()
+        return df_input.copy() 
 
     print(f"Columns with missing values: {cols_with_missing}")
 
