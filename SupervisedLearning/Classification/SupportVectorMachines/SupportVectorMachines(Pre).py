@@ -3,11 +3,14 @@ import pandas as pd
 import seaborn as sns 
 import matplotlib.pyplot as plt 
 import io 
+from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 
 
 dataset = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/SupportVectorMachines/WineQT.csv')
 df = dataset.copy()
+print(type(df))
+
 
 def data_exploration():
     
@@ -27,16 +30,16 @@ def imputations():
         imputer  = IterativeImputer(max_iter = 10, random_state=50, initial_strategy='mean', imputation_order='ascending')
         df_imputed = imputer.fit(df) #fit the data first and then transform
         df_imputed_array = df_imputed.transform(df)
-        df_transformed = pd.DataFrame(df_imputed_array, columns=df, index=df.index)
+        df_transformed = pd.DataFrame(df_imputed_array, columns=df.columns, index=df.index)
         print("The values have been imputed")
         return df_transformed
-
+    
+    #print(type(df_transformed))
 '''We did imputations way before oultier analysis because, the NaN values might mess up with the outlier handling 
 essentially producing what we call as a pseudo-outlier'''
 
 def outlier_analysis():
     pass
 
-
-data_exploration()
-imputations()
+data_exploration(df)
+imputations(df)
