@@ -1,4 +1,6 @@
-Of course. Here is a comprehensive study guide in a clean, copyable Markdown format, consolidating everything we've discussed about `RandomForestRegressor` and `OneClassSVM`.
+Coversation with gemini
+
+`RandomForestRegressor` and `OneClassSVM`.
 
 ````markdown
 # AI Study Guide: SVM and RandomForest
