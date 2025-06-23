@@ -6,6 +6,7 @@ import io
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import OneClassSVM
 
 
 dataset = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/SupportVectorMachines/WineQT.csv')
@@ -129,9 +130,42 @@ def manual_outlier_analysis():
         
     if z_score_outlier_locs:
         print(f"\nDetected {len(set(z_score_outlier_locs))} Z- score based outliers")
+    else:
+        print("No Z-Score based outliers detected")
     print("Outlier analysis had been complete")      
     
+def manual_outlier_handling():
+    pass
+ 
 def automatic_outlier_analysis():
+    
+    #automatic outlier handling / model based outlier handling
+    # we will look on to actually implementing the TF (neural network based) outlier analysis in the upcoming modules 
+    
+    dfout = df_transformed.copy()
+    mldmodel = OneClassSVM(kernel='rbf',
+                           degree=7,
+                           gamma='scale',
+                           coef0=0.0,
+                           tol=0.001,
+                           nu=0.5,
+                           shrinking=True,
+                           cache_size=200,
+                           verbose=True,
+                           max_iter=-1)
+    
+    dfout["outlier_score"] = mldmodel.fit_predict(dfout)
+    #mistake i did
+    #for col in dfout["outlier_score"]:
+    #    if col == -1:
+    #        print(f"we have an outlier here at {dfout.at[col, "outlier_score"]}") 
+    
+            
+    dfout_filtered = dfout[dfout["outlier_score"] == 1].copy()
+    
+    
+    
+    
     
 
 
