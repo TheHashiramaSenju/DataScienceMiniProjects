@@ -5,7 +5,6 @@ Coversation with gemini
 ````markdown
 # AI Study Guide: SVM and RandomForest
 
-*Generated on: Monday, June 23, 2025*
 
 This guide consolidates our conversation on two powerful scikit-learn models: `RandomForestRegressor` for regression tasks and `OneClassSVM` for anomaly detection.
 
