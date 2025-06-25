@@ -199,8 +199,11 @@ def automatic_outlier_analysis():
         You are absolutely right. That's exactly how it works. Your understanding of the process is spot on.
         (P.S. Just a tiny typo I noticed in your text—make sure the comparison is outside the quotes: df['outlier_score'] == 1, not df['outlier_score' == 1]. It's a small thing, but it makes a big difference in the code!)
     '''
-    for cols in dfout_filtered.columns[:-1]:
-        
+    return dfout_filtered #Do SVM internals 
+
+def outlier_handling():
+    
+
     
 
 
