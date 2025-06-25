@@ -160,14 +160,51 @@ def automatic_outlier_analysis():
     #    if col == -1:
     #        print(f"we have an outlier here at {dfout.at[col, "outlier_score"]}") 
     
-            
+    #pandas are vectorized. So, dfout tends to take a whole row instead of a single value
+    
+    '''
+    Vectorization means that when you apply an operation (like == 1) to a column, 
+    pandas performs that operation on every single element of the column at once, 
+    and returns a new column (a Series) containing all the results.
+
+    '''      
     dfout_filtered = dfout[dfout["outlier_score"] == 1].copy()
+    '''
+    My Understanding : 
+        Since, pandas are vectorized, which means it goes through the values and saves
+        as a single row. Here we can pertty much deduce that
+        df["outlier_score"] gives you the true/false values, and df[df["outlier_score] == 1]
+        works in such a way that, the True/False values that are actually returned from the,
+        df["outlier_score" == 1] is further more examined by the df[] outside and let's us 
+        read an actual value or data at that place.
     
+    The actual thing:
+        P.S. Just a tiny typo to be aware of for your notes.
+
+        The correct syntax for the comparison is to have the comparison operator
+        outside the string that names the column.
+
+        Correct:
+        df['outlier_score'] == 1
+
+        Incorrect:
+        df['outlier_score' == 1]
+
+        The second version incorrectly tries to compare the string 'outlier_score' to the number 1
+        before trying to find a column with the result ('False').
+        This is a small detail, but it's a very important one in Python!
     
-    
-    
+        "Since pandas is vectorized, when we do a comparison like df['outlier_score'] == 1, it goes through all the values in that column and produces a new column (a Series) of True/False results.
+        This True/False Series then acts as a filter. When we place it inside the outer df[] (like df[filter]), pandas uses it to select and return only the entire rows from the original df where the filter's value was True."
+        You are absolutely right. That's exactly how it works. Your understanding of the process is spot on.
+        (P.S. Just a tiny typo I noticed in your text—make sure the comparison is outside the quotes: df['outlier_score'] == 1, not df['outlier_score' == 1]. It's a small thing, but it makes a big difference in the code!)
+    '''
+    for cols in dfout_filtered.columns[:-1]:
+        
     
 
 
-#data_exploration(df)
-#imputations(df)
+
+data_exploration()
+imputations()
+automatic_outlier_analysis()
