@@ -7,7 +7,7 @@ from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import OneClassSVM
-
+from sklearn.preprocessing import PowerTransformer, RobustScaler
 
 dataset = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/SupportVectorMachines/WineQT.csv')
 df = dataset.copy()
@@ -98,8 +98,8 @@ def manual_outlier_analysis():
         q1, q3 = df_transformed[columns_i].quantile([.25, .75])
         IQR = q3 - q1
         
-        lower_bound = q1 - 1.5 * IQR
-        upper_bound = q3 - 1.5 * IQR
+        lower_bound = q1 - 3.0 * IQR
+        upper_bound = q3 - 3.0 * IQR
         
         mean = np.mean(df_transformed[columns_i])
         std_dev = np.std(df_transformed[columns_i])
@@ -169,6 +169,8 @@ def automatic_outlier_analysis():
 
     '''      
     dfout_filtered = dfout[dfout["outlier_score"] == 1].copy()
+    global dfout_nonfiltered
+    dfout_nonfiltered = dfout[dfout["outlier_score"] == -1].copy()
     '''
     My Understanding : 
         Since, pandas are vectorized, which means it goes through the values and saves
@@ -199,11 +201,13 @@ def automatic_outlier_analysis():
         You are absolutely right. That's exactly how it works. Your understanding of the process is spot on.
         (P.S. Just a tiny typo I noticed in your text—make sure the comparison is outside the quotes: df['outlier_score'] == 1, not df['outlier_score' == 1]. It's a small thing, but it makes a big difference in the code!)
     '''
-    return dfout_filtered #Do SVM internals 
+    
+    return dfout_filtered #Do SVM interals
 
 def outlier_handling():
-    
-
+    #we specifically use scalers and transformers here to make the data more reliable in the learning model
+    #do the table comparison and the data type difference in datasets 
+    print(dfout_nonfiltered)
     
 
 
@@ -211,3 +215,4 @@ def outlier_handling():
 data_exploration()
 imputations()
 automatic_outlier_analysis()
+outlier_handling()
