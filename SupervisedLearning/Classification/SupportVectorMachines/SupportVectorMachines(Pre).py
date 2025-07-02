@@ -8,6 +8,7 @@ from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import PowerTransformer, RobustScaler
+import s
 
 dataset = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/SupportVectorMachines/WineQT.csv')
 df = dataset.copy()
@@ -202,13 +203,22 @@ def automatic_outlier_analysis():
         (P.S. Just a tiny typo I noticed in your text—make sure the comparison is outside the quotes: df['outlier_score'] == 1, not df['outlier_score' == 1]. It's a small thing, but it makes a big difference in the code!)
     '''
     
+    for col in dfout_nonfiltered.columns:
+        
+        for j in dfout_nonfiltered.index:
+            
+            sns.hisplot()
+        
+    
+    
+    print(dfout_nonfiltered)
     return dfout_filtered #Do SVM interals
 
 def outlier_handling():
     #we specifically use scalers and transformers here to make the data more reliable in the learning model
     #do the table comparison and the data type difference in datasets 
-    print(dfout_nonfiltered)
-    
+    pass
+
 
 
 
