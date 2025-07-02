@@ -1,7 +1,7 @@
 import pandas as pd 
 import numpy as np
 import tensorflow as tf
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Sequential 
 from tensorflow.keras.models import Dense, Input 
 
@@ -20,7 +20,7 @@ class OutlierDiagnoser:
             X = clean_df.drop(columns=[target_values])        
             y = clean_df[target_values]
             
-            scaler = RobustScaler()
+            scaler = StandardScaler()
             scaledx = scaler.fit_transform(X)
             
             self.scalers[target_values] = scaler
@@ -80,7 +80,7 @@ def repair_outlier_feature(df_full, normal_df, outlier_row_index, column_to_fix)
     y_train = normal_df[column_to_fix]
     X_predict = df_full.loc[[outlier_row_index]][features]
 
-    scaler = RobustScalerScaler()
+    scaler = StandardScalerScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_predict_scaled = scaler.transform(X_predict)
 
