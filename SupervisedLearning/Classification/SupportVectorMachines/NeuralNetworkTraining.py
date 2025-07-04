@@ -28,8 +28,8 @@ class OutlierDiagnoser:
             #neural network model for training them 
             model = Sequential([
                 Input(shape=(scaledx[1, ])),
-                Dense(16, activation = 'relu')
-                Dense(8, activation='relu')
+                Dense(16, activation = 'relu'),
+                Dense(8, activation='relu'),
                 Dense(1)
             ])
             
@@ -80,7 +80,7 @@ def repair_outlier_feature(df_full, normal_df, outlier_row_index, column_to_fix)
     y_train = normal_df[column_to_fix]
     X_predict = df_full.loc[[outlier_row_index]][features]
 
-    scaler = StandardScalerScaler()
+    scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_predict_scaled = scaler.transform(X_predict)
 
@@ -88,7 +88,7 @@ def repair_outlier_feature(df_full, normal_df, outlier_row_index, column_to_fix)
         Input(shape=(len(features),)),
         Dense(32, activation = 'relu'),
         Dense(16, activation = 'relu'),
-        Dense(8, activation = 'relu')
+        Dense(8, activation = 'relu'),
         Dense(1)
     ])
     model.compile(optimizer='adam', loss='mean_squared_error')
