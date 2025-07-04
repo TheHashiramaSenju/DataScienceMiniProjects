@@ -8,7 +8,7 @@ from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import PowerTransformer, RobustScaler
-import s
+
 
 dataset = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/SupportVectorMachines/WineQT.csv')
 df = dataset.copy()
@@ -169,8 +169,8 @@ def automatic_outlier_analysis():
     and returns a new column (a Series) containing all the results.
 
     '''      
+    global dfout_filtered, dfout_nonfiltered
     dfout_filtered = dfout[dfout["outlier_score"] == 1].copy()
-    global dfout_nonfiltered
     dfout_nonfiltered = dfout[dfout["outlier_score"] == -1].copy()
     '''
     My Understanding : 
@@ -205,10 +205,28 @@ def automatic_outlier_analysis():
     print(dfout_nonfiltered)
     return dfout_filtered #Do SVM interals
 
-def automatic_outlier_handling():
+def automatic_outlier_handling(method = 'cap_quantile'):
     #we specifically use scalers and transformers here to make the data more reliable in the learning model
     #do the table comparison and the data type difference in datasets 
-    pass
+    
+    """
+    Handles outliers in the dataframe using one of several methods.
+
+    Args:
+        method (str): The method to use for outlier handling.
+                      Options:
+                      - 'cap_quantile' (default): Caps outliers at the 1st and 99th
+                        percentiles of the inlier data.
+                      - 'cap_minmax': Caps outliers at the absolute min and max
+                        of the inlier data.
+                      - 'remove': Removes outlier rows entirely.
+    """
+    
+    if method == 'remove':
+        print(f"Original shape: {}")
+
+    
+    
 
 
 
@@ -216,4 +234,4 @@ def automatic_outlier_handling():
 data_exploration()
 imputations()
 automatic_outlier_analysis()
-automatic_outlier_handling()
+#automatic_outlier_handling()
