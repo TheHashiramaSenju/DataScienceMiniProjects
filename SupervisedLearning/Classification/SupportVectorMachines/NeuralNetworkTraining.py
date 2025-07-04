@@ -17,6 +17,7 @@ class OutlierDiagnoser:
     def fit(self, clean_df):
         '''Neural training to make model learn about what actually is normal'''
         for target_values in self.features:
+            #okay! now that model saves each model.
             X = clean_df.drop(columns=[target_values])        
             y = clean_df[target_values]
             
@@ -27,7 +28,7 @@ class OutlierDiagnoser:
             
             #neural network model for training them 
             model = Sequential([
-                Input(shape=(scaledx[1, ])),
+                Input(shape=(scaledx.shape[1],)),
                 Dense(16, activation = 'relu'),
                 Dense(8, activation='relu'),
                 Dense(1)
@@ -37,7 +38,7 @@ class OutlierDiagnoser:
             model.compile(optimizer = 'adam', loss = 'mean_squared_error')
             model.fit(scaledx, y, epochs=50, verbose=0)
             
-            #saving the model for future use 
+            #saving the model for future use / comparison
             self.diagnostic_models[target_values] = model
             
             print("model is now ready")

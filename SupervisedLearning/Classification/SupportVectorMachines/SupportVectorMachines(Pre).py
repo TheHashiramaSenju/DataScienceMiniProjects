@@ -202,19 +202,10 @@ def automatic_outlier_analysis():
         You are absolutely right. That's exactly how it works. Your understanding of the process is spot on.
         (P.S. Just a tiny typo I noticed in your text—make sure the comparison is outside the quotes: df['outlier_score'] == 1, not df['outlier_score' == 1]. It's a small thing, but it makes a big difference in the code!)
     '''
-    
-    for col in dfout_nonfiltered.columns:
-        
-        for j in dfout_nonfiltered.index:
-            
-            sns.hisplot()
-        
-    
-    
     print(dfout_nonfiltered)
     return dfout_filtered #Do SVM interals
 
-def outlier_handling():
+def automatic_outlier_handling():
     #we specifically use scalers and transformers here to make the data more reliable in the learning model
     #do the table comparison and the data type difference in datasets 
     pass
@@ -225,4 +216,4 @@ def outlier_handling():
 data_exploration()
 imputations()
 automatic_outlier_analysis()
-outlier_handling()
+automatic_outlier_handling()
