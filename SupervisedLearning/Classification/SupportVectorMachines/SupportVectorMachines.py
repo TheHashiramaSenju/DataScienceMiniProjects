@@ -45,7 +45,7 @@ def automatic_outlier_analysis(df_to_analyze):
     dfout = df_to_analyze.copy()
     model = OneClassSVM(nu=0.1, kernel='rbf', gamma='scale', verbose=True)
     
-    featuers_for_model = dfout.drop('Id', axis=1)
+    featuers_for_model = dfout.drop('quality', axis=1)
     outlier_predictions = model.fit_predict(featuers_for_model)
     dfout['outlier_score'] = outlier_predictions
 
@@ -111,7 +111,7 @@ def feature_scaling_and_transformations(df_processed):
     X_test_transformed = transformer.transform(X_test)
     X_test_scaled = scaler.transform(X_test_transformed)
     
-    return X_train_scaled, X_test_scaled, y_train, y_test
+    return X_train_scaled, X_test_scaled, y_train, y_test, transformer, scaler
     
     
 def data_modeling(X_train, y_train):
@@ -129,7 +129,7 @@ def data_modeling(X_train, y_train):
     best_params = grid_search.best_params_
     print(f'Found the best parameters {best_params}')
     
-    return best_params
+    return grid_search
 
 def model_training (X_train, X_test, y_train, y_test, best_params):
     svm_classifier_optimized = SVC(**best_params)
@@ -147,10 +147,9 @@ if __name__ == '__main__':
     df_final = automatic_outlier_handling(df_with_scores, df_inliers, df_outliers)
     
     X_train_processed, X_test_processed, y_train, y_test, fitted_transformer, fitted_scaler = feature_scaling_and_transformations(df_final)
-    best_parameters = data_modeling(X_train_processed, y_train)
-    
     grid_search_result = data_modeling(X_train_processed, y_train)
-    model_training(X_train_processed, X_test_processed, y_train, y_test, best_parameters)
+    
+    model_training(X_train_processed, X_test_processed, y_train, y_test, grid_search_result.best_params_)
     
     
     print("Model saving")
