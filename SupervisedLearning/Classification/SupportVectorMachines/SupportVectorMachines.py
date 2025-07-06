@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.preprocessing import PowerTransformer, MinMaxScaler
 from sklearn.model_selection import GridSearchCV
-
+import joblib
 
 
 dataset = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/SupportVectorMachines/WineQT.csv')
@@ -95,8 +95,7 @@ def automatic_outlier_handling(df_full, df_inliers, df_outliers, method='cap_qua
         })
         print(comparison_df.to_string())
     print(df_handled.drop('outlier_score', axis=1))
-    global dropped
-    dropped =  df_handled.drop('outlier_score', axis=1)
+    return df_handled.drop('outlier_score', axis=1)
 
 def feature_scaling_and_transformations(df_processed):
     
@@ -133,10 +132,10 @@ def data_modeling(X_train, y_train):
     return best_params
 
 def model_training (X_train, X_test, y_train, y_test, best_params):
-    svm_classifier_optimized = SVC(**best_parameters)
+    svm_classifier_optimized = SVC(**best_params)
     svm_classifier_optimized.fit(X_train, y_train)
     
-    score = svm_classifier_optimized.score(X_train, y_train)
+    score = svm_classifier_optimized.score(X_test, y_test)
     print(f'The accuracy score of optimized SVM is {score}')
     
 
@@ -146,11 +145,19 @@ if __name__ == '__main__':
     df_imputed = imputations(df)
     df_with_scores, df_inliers, df_outliers = automatic_outlier_analysis(df_imputed)
     df_final = automatic_outlier_handling(df_with_scores, df_inliers, df_outliers)
-    X_train_processed, X_test_processed, y_train, y_test = feature_scaling_and_transformations(df_final)
+    
+    X_train_processed, X_test_processed, y_train, y_test, fitted_transformer, fitted_scaler = feature_scaling_and_transformations(df_final)
     best_parameters = data_modeling(X_train_processed, y_train)
+    
+    grid_search_result = data_modeling(X_train_processed, y_train)
     model_training(X_train_processed, X_test_processed, y_train, y_test, best_parameters)
     
     
+    print("Model saving")
+    joblib.dump(fitted_transformer, 'wine_transformer.joblib')
+    joblib.dump(fitted_scaler, 'wine_scaler.joblib')
+    joblib.dump(grid_search_result.best_estimator_, 'wine_svm_model.joblib')
+    print("Components have been saved successfully")
     
 
 
