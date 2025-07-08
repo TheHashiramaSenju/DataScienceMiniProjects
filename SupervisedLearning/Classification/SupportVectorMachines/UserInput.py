@@ -28,19 +28,35 @@ def predict_wine_quality():
     
     user_inputs = {}
     
-    for feature in feature_names:
-        while True:
-            try:
-                value = float(input(f"Enter the value of {feature}"))
-                user_inputs[feature] = value
-                break
-            except ValueError:
-                print("Invalid input. Please enter a number") #take kd of dictionaries, vectorisation by pandas in python, classes
+    print("1 --> continuous input")
+    print("2 --> single input")
+    print("3 --> Lump batchwise input")
     
-    #creating a dataframe out of the given values for processings
-    input_df = pd.DataFrame([user_inputs], columns=feature_names)
-    print(user_inputs)
+    a = int(input("How do you want to enter the values for wine quality predictions"))
+       
+    if a == 1:
+        for feature in feature_names:
+            while True:
+                try:
+                    value = float(input(f"Enter the value of {feature}"))
+                    user_inputs[feature] = value
+                    break
+                except ValueError:
+                    print("Invalid input. Please enter a number") #take kd of dictionaries, vectorisation by pandas in python, classes
+
+        #creating a dataframe out of the given values for processings
+        input_df = pd.DataFrame([user_inputs], columns=feature_names)
+        print(user_inputs)
     
+    elif (a == 2):
+        c = input("enter your values")
+        for i in c:
+            print(i)
+        
+    
+    elif (a == 3):
+        pass
+
     # --- 3. Preprocessing -->yet to be done
     
     # First, apply the PowerTransformer and min_max scaler
