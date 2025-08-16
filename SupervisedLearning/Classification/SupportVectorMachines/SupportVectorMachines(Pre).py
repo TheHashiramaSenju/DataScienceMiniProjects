@@ -1,13 +1,18 @@
 import numpy as np
-import pandas as pd 
-import seaborn as sns 
-import matplotlib.pyplot as plt 
-import io 
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import io
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import OneClassSVM
-from sklearn.preprocessing import PowerTransformer, RobustScaler
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.preprocessing import PowerTransformer, MinMaxScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+
 
 
 dataset = pd.read_csv('/home/notshadow/Documents/MiscFiles/Datascience/SupervisedLearning/Classification/SupportVectorMachines/WineQT.csv')
@@ -39,7 +44,7 @@ def imputations():
                                          max_depth=5,     #Limit tree depth
                                          random_state=42,
                                          n_jobs=-1) #use all CPU cores
-    if not missing_values:
+    if not missing_values:#what else here can be like a alternative for random forest regressor?
         print("There are no values found")
         df_transformed = df.copy()
     else:
@@ -223,11 +228,59 @@ def automatic_outlier_handling(method = 'cap_quantile'):
     """
     
     if method == 'remove':
-        print(f"Original shape: {}")
+        #print(f"Original shape: {}")
+        pass
 
+    def data_modeling(X_train, y_train):
+    svm_classifier = SVC()
     
+    param_grid = {
+        'C' : [0.1, 1, 10],
+        'kernel' : ['linear', 'rbf', 'poly'], 
+        'gamma'  : ['scale', 'auto'],
+        'degree' : [2, 3, 4]
+    }
     
+    grid_search = GridSearchCV(svm_classifier, param_grid, cv=5)
+    grid_search.fit(X_train, y_train)
+    best_params = grid_search.best_params_
+    print(f'Found the best parameters {best_params}')
+    
+    return best_params
+    
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import PowerTransformer, MinMaxScaler
+from sklearn.svm import SVC
 
+# Assume X_train, X_test, y_train, y_test are your RAW, unscaled data splits
+
+# 1. Create a full pipeline with preprocessing and the classifier
+model_pipeline = Pipeline(steps=[
+    ('power_transform', PowerTransformer()),
+    ('minmax_scaler', MinMaxScaler()),
+    ('classifier', SVC(random_state=42)) # The model goes here
+])
+
+# 2. Define the parameter grid for the components inside the pipeline
+#    Use the step name __ parameter name (e.g., 'classifier__C')
+param_grid = {
+    'classifier__C': [0.1, 1, 10, 100],
+    'classifier__kernel': ['rbf', 'poly'],
+    'classifier__gamma': ['scale', 'auto'],
+    'classifier__degree': [2, 3] # Only used by 'poly' kernel
+}
+
+# 3. Create the GridSearchCV object with the pipeline and parameter grid
+grid_search = GridSearchCV(model_pipeline, param_grid, cv=5, n_jobs=-1, verbose=1)
+
+# 4. Fit the grid search on the ORIGINAL, UNPROCESSED training data
+#    The pipeline handles the scaling correctly for each cross-validation fold
+grid_search.fit(X_train, y_train)
+
+# 5. Get the best parameters and the best score
+print(f"Best parameters found: {grid_search.best_params_}")
+print(f"Best cross-validation score: {grid_search.best_score_:.4f}")
 
 
 
@@ -235,3 +288,100 @@ data_exploration()
 imputations()
 automatic_outlier_analysis()
 #automatic_outlier_handling()
+
+
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+
+# ... (all your existing code for preparing data and the pipeline)
+
+# Fit the grid search on the training data
+grid_search.fit(X_train, y_train)
+
+# --- SAVE THE MODEL ---
+
+# 1. Get the best pipeline from the grid search
+best_pipeline = grid_search.best_estimator_
+
+# 2. Define a filename
+filename = 'wine_quality_model.joblib'
+
+# 3. Save the pipeline to a file
+joblib.dump(best_pipeline, filename)
+
+print(f"Model saved to {filename}")
+
+
+# predict.py
+
+import joblib
+import pandas as pd
+
+# --- LOAD THE SAVED MODEL ---
+print("Loading trained model...")
+model = joblib.load('wine_quality_model.joblib')
+print("Model loaded successfully.")
+
+def predict_wine_quality(input_data):
+    """
+    Takes user input, prepares it, and returns a quality prediction.
+    
+    Args:
+        input_data (dict): A dictionary where keys are feature names and 
+                           values are the user's input.
+                           
+    Returns:
+        int: The predicted wine quality.
+    """
+    
+    # 1. The model was trained on a DataFrame with specific column names.
+    #    You must create a DataFrame with the exact same column names.
+    #    This is a critical step.
+    feature_names = [
+        'fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar',
+        'chlorides', 'free sulfur dioxide', 'total sulfur dioxide', 'density',
+        'pH', 'sulphates', 'alcohol'
+    ]
+    
+    # Convert the input dictionary to a DataFrame
+    input_df = pd.DataFrame([input_data], columns=feature_names)
+    
+    # 2. Use the loaded pipeline to make a prediction.
+    #    The pipeline will automatically handle the scaling and transformation.
+    prediction = model.predict(input_df)
+    
+    # 3. The prediction is an array (e.g., [6]), so return the first item.
+    return prediction[0]
+
+if __name__ == '__main__':
+    # --- EXAMPLE OF USER INPUT (like from a CLI or UI) ---
+    # This simulates a user providing the characteristics of a wine.
+    example_input = {
+        'fixed acidity': 7.4,
+        'volatile acidity': 0.7,
+        'citric acid': 0.0,
+        'residual sugar': 1.9,
+        'chlorides': 0.076,
+        'free sulfur dioxide': 11.0,
+        'total sulfur dioxide': 34.0,
+        'density': 0.9978,
+        'pH': 3.51,
+        'sulphates': 0.56,
+        'alcohol': 9.4
+    }
+    
+    # Get the prediction for the example input
+    predicted_quality = predict_wine_quality(example_input)
+    
+    print("\n--- Prediction ---")
+    print(f"Input Features: {example_input}")
+    print(f"Predicted Wine Quality: {predicted_quality}")
+Traceback (most recent call last):
+  File "/mnt/data/MiscFiles/Datascience/SupervisedLearning/Classification/SupportVectorMachines/UserInput.py", line 51, in <module>
+    predict_wine_quality()
+    ~~~~~~~~~~~~~~~~~~~~^^
+  File "/mnt/data/MiscFiles/Datascience/SupervisedLearning/Classification/SupportVectorMachines/UserInput.py", line 41, in predict_wine_quality
+    data_transformed = transformer.transform(input_df)
+                       ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'transformer' where it is not associated with a value
