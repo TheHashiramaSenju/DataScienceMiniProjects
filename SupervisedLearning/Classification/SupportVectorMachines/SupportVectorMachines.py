@@ -27,7 +27,7 @@ def data_exploration(df_to_explore):
 def imputations(df_to_impute):
     
     missing_values = df_to_impute.columns[df_to_impute.isnull().any()].tolist()
-    rf_estimator = RandomForestRegressor(n_estimators=10, max_depth=5, random_state=42, n_jobs=-1)
+    rf_estimator = RandomForestRegressor(n_estimators=10, max_depth=5, random_state=42, n_jobs=-1) 
 
     if not missing_values:
         print("\nThere are no missing values found.")
