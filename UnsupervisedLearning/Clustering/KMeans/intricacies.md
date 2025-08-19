@@ -5,7 +5,7 @@ This document provides a detailed look at various estimators you can use for ite
 ---
 
 ## 1. Estimators for `IterativeImputer`
-
+ 
 When using `IterativeImputer` from scikit-learn, the `estimator` is the machine learning model that predicts missing values based on the other features. While `RandomForestRegressor` is a strong default, other models offer different trade-offs in speed, complexity, and accuracy.
 
 ### General Purpose Estimators
