@@ -2,7 +2,7 @@
 
 This document provides a detailed look at various estimators you can use for iterative imputation and a deep dive into the parameters of the powerful `HistGradientBoostingRegressor`.
 
---- 
+---
 
 ## 1. Estimators for `IterativeImputer`
  
