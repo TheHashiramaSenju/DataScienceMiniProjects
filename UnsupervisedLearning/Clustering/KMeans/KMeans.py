@@ -19,9 +19,45 @@ def data_exploration(df_to_explore):
     df_to_explore.info(buf=info_buffer)
     info_output = info_buffer.getvalue()
     print(f"----------- DataFrame Description -----------\n{df_to_explore.describe().to_string()}\n\n----------- DataFrame Shape -----------\n{df_to_explore.shape}\n\n----------- DataFrame Info -----------\n{info_output}\n\n---------------------DataHead--------------------\n{df_to_explore.head(30)}\n\n---------------------DataTail--------------------\n{df_to_explore.tail(30)}")
-    #since this is a time-series data, we analyzr the datas
+    #since this is a time-series data, we analyze the datas
     
 data_exploration(df)
+
+def handling_outlier(new_df, df_sales, df_transactions, df_date, merge_table):
+    
+    #visualizing the prepared data
+    plt.figure(figsize=(30, 20))
+    plt.xticks(rotation = 45, ha = 'right', fontsize = 10)
+    plt.tight_layout()
+    sns.boxplot(data=new_df[['InvoiceNo', 'LastTransaction', 'sales']]) #why 2 brackets now, what are they asking me to do?
+    plt.show()
+    
+    #handling the outliers
+    
+    #handling time series data
+    print(df_date)
+    df_test1 = df_date.copy()
+    df_test1['Time'] = pd.to_datetime(df_test1)
+    df_test1['Timestamp'] = df_test1['Time'].apply(lambda x: x.timestamp())
+    correction_data = df_test1[['Timestamp', 'LastTransaction']]
+    correction_data2 = df_test1[['Timestamp', 'LastTransaction']].rename(columns={'LastTransaction' : 'value'})
+    
+    detected_outliers = detect_ts(
+        correction_data2, 
+        max_anoms=0.5,
+        alpha=0.05,
+        direction='both',
+        only_last=None,
+        longterm=True #play with values
+    )
+    print(detected_outliers)
+    
+    
+    
+    return new_df, df_sales, df_transactions, df_date, merge_table
+
+handling_outlier()
+
 
 def data_handling(df_to_impute):
     
@@ -114,38 +150,6 @@ def feature_engineering(df_corrected):
     new_df = pd.merge(merge_table, df_sales, how='inner', on='CustomerID') #why only inner
     return df_sales, df_transactions, df_date, merge_table, new_df
 
-
-
-
-
-'''def handling_outlier(new_df, df_sales, df_transactions, df_date, merge_table):
-    
-    #visualizing the prepared data
-    plt.figure(figsize=(30, 20))
-    plt.xticks(rotation = 45, ha = 'right', fontsize = 10)
-    plt.tight_layout()
-    sns.boxplot(data=new_df[['InvoiceNo', 'LastTransaction', 'sales']]) #why 2 brackets now, what are they asking me to do?
-    plt.show()
-    
-    #handling the outliers
-    
-    #handling time series data
-    print(df_date)
-    df_test1 = df_date.copy()
-    df_test1['Time'] = pd.to_datetime(df_test1)
-    df_test1['Timestamp'] = df_test1['Time'].apply(lambda x: x.timestamp())
-    correction_data = df_test1[['Timestamp', 'LastTransaction']]
-    correction_data2 = df_test1[['Timestamp', 'LastTransaction']].rename(columns={'LastTransaction' : 'value'})
-    
-    detected_outliers = detect_ts(
-        correction_data2, 
-        max_anoms=0.5,
-        alpha=0.05,
-        direction='both',
-        only_last=None,
-        longterm=True #play with values
-    )
-    print(detected_outliers) '''
 
 
 def advanced_feature_engineering(df_corrected):
