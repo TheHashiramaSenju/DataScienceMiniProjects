@@ -203,5 +203,6 @@ def add_temporal_features(customer_features, df_corrected):
     customer_features['purchase_rhythm_score'] = customer_features['purchase_rhythm_score'].fillna(0)
     
     return customer_features
+                
     
 
