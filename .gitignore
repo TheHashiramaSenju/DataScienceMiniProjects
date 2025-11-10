@@ -1,3 +1,6 @@
 /venv
 /bit_checker.py
 SupervisedLearning/Classification/DecisionTrees/DecisonTrees.py
+/UnsupervisedLearning/Clustering/KMeans/Makeshift.py
+*.env
+*.db
